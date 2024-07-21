@@ -7,6 +7,7 @@ import {
   REFRESH_TOKEN_SECRET,
   REFRESH_TOKEN_EXPIRY,
 } from "../config.js";
+import validator from "validator";
 
 const userSchema = new Schema(
   {
@@ -35,15 +36,13 @@ const userSchema = new Schema(
       type: String,
       required: true,
       unique: true,
-      lowercase: true,
       trim: true,
       index: true,
     },
     phone: {
       type: String,
-      required: true,
-      unique: true,
       trim: true,
+      default: "",
     },
     profilePic: {
       type: String,
@@ -90,6 +89,7 @@ const userSchema = new Schema(
           ref: "User",
         },
       ],
+      default: [],
     },
     groups: {
       type: [
@@ -98,6 +98,7 @@ const userSchema = new Schema(
           ref: "Group",
         },
       ],
+      default: [],
     },
   },
   {

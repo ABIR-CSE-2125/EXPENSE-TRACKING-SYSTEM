@@ -153,3 +153,24 @@ export const login = asyncHandler(async (req, res) => {
     return res.status(500).json(new ApiError(500, "Issue in Login"));
   }
 });
+
+export const logout = asyncHandler(async (req, res) => {
+  const user = req.user;
+
+  await User.findOneAndUpdate(
+    user._id,
+    {
+      $unset: {
+        refreshToken: 1,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+  return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, {}, "User Logged Out"));
+});

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { upload } from "../middlewares/fileUpload.middleware.js";
-import { register } from "../controllers/user.controller.js";
+import { login, register } from "../controllers/user.controller.js";
 const router = Router();
 
 // user routes
@@ -13,5 +13,7 @@ router.route("/register").post(
   ]),
   register
 );
+
+router.route("/login").post(login);
 
 export default router;

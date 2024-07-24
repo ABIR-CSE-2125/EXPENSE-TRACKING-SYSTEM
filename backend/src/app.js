@@ -18,8 +18,12 @@ app.use(cookieParser());
 
 // route imports
 import userRouter from "./routes/user.route.js";
+// import friendsRouter from "./routes/friends.route.js";
 // routings
 
-app.use("/api/v1/user", userRouter);
+const v1ApiRootUrl = "/api/v1";
+
+app.use(v1ApiRootUrl + "/user", userRouter);
+// app.use(v1ApiRootUrl + "/api/v1/friends", friendsRouter);
 
 export default app;

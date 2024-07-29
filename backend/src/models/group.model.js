@@ -2,7 +2,7 @@ import { Schema, model } from "mongoose";
 import { GROUP_TYPE_ENUM } from "../config.js";
 const groupSchema = new Schema(
   {
-    name: {
+    groupName: {
       type: String,
       required: true,
       trim: true,
@@ -13,7 +13,6 @@ const groupSchema = new Schema(
     },
     description: {
       type: String,
-      required: true,
     },
     type: {
       type: String,

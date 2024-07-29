@@ -7,12 +7,14 @@ import { User } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import { REFRESH_TOKEN_SECRET } from "../config.js";
 import { deleteFromCloudinary } from "../utils/deleteFile.util.js";
+import { Group } from "../models/group.model.js";
+import mongoose from "mongoose";
 const options = {
   httpOnly: true,
   // when we push in production make secure true
   //   secure: true,
 };
-
+// Authentication APIs
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
     const user = await User.findById(userId);
@@ -233,6 +235,7 @@ export const refershAccessToken = asyncHandler(async (req, res) => {
   }
 });
 
+// Profile updation APIs
 export const changePassword = asyncHandler(async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
@@ -358,16 +361,7 @@ export const deleteUser = asyncHandler(async (req, res) => {
     });
   }
 });
-export const updateGroupsList = asyncHandler(async (req, res) => {
-  try {
-  } catch (error) {
-    return res.status(500).json({
-      apiError: new ApiError(500, "Issue in Updating Groups"),
-      message: error.message,
-    });
-  }
-});
-
+// Friends Management APIs
 export const addFriends = asyncHandler(async (req, res) => {
   try {
     const user = req.user;
@@ -407,41 +401,38 @@ export const addFriends = asyncHandler(async (req, res) => {
 });
 
 export const getFriends = asyncHandler(async (req, res) => {
-  const friendsIds = req.user.friends;
-  const friends = await User.find({
-    _id: {
-      $in: friendsIds,
-    },
-  }).select("-password -refreshToken -friends -groups");
-  return res
-    .status(200)
-    .json(new ApiResponse(200, friends, "Freinds Data Fetched"));
+  try {
+    const friendsIds = req.user.friends;
+    const friends = await User.find({
+      _id: {
+        $in: friendsIds,
+      },
+    }).select("-password -refreshToken -friends -groups");
+    return res
+      .status(200)
+      .json(new ApiResponse(200, friends, "Freinds Data Fetched"));
+  } catch (error) {
+    return res.status(500).json({
+      apiError: new ApiError(500, "Issue in Fetching Friends"),
+      message: error.message,
+    });
+  }
 });
 export const deleteFriend = asyncHandler(async (req, res) => {
   //   Reconfirmation of deletion will be handled from frontend
   try {
-    const { userName } = req.body;
-    if (!userName) {
-      return res.status(400).json(new ApiError(400, "UserName Required"));
+    const { userId } = req.body;
+    if (!userId) {
+      return res.status(400).json(new ApiError(400, "User ID Required"));
     }
     const user = req.user;
-    const currentFriendsIds = user?.friends;
+    const currentFriends = user?.friends;
     if (currentFriendsIds.length === 0) {
       return res.status(400).json(new ApiError(400, "No Friends"));
     }
-    const currentFriends = await User.find(
-      {
-        _id: {
-          $in: currentFriendsIds,
-        },
-      },
-      {
-        userName: 1,
-      }
+    const updatedFriends = currentFriends.filter(
+      (friend) => friend?._id !== userId
     );
-    const updatedFriends = currentFriends
-      .filter((friend) => friend.userName !== userName)
-      .map((friend) => friend._id);
 
     if (updatedFriends.length === currentFriends.length) {
       return res
@@ -460,11 +451,144 @@ export const deleteFriend = asyncHandler(async (req, res) => {
     if (!newUser) {
       return res.status(500).json(new ApiError(500, "Issue in Saving Data"));
     }
+
     return res
       .status(200)
-      .json(
-        new ApiResponse(200, newUser, `Friend ${userName} Deleted Successfully`)
-      );
+      .json(new ApiResponse(200, newUser, `Friend Deleted Successfully`));
+  } catch (error) {
+    return res.status(500).json({
+      apiError: new ApiError(500, "Issue in Friend Deletion"),
+      message: error.message,
+    });
+  }
+});
+
+// Group Management APIs
+
+export const createGroups = asyncHandler(async (req, res) => {
+  try {
+    const user = req.user;
+    const { groupName, description, type, members } = req.body;
+    console.log(members);
+    if (!groupName) {
+      return res.status(400).json(new ApiError(400, "Group Name is required"));
+    }
+
+    const existingGroup = await Group.findOne({
+      $and: [{ groupName }, { creator: user?._id }],
+    });
+
+    if (existingGroup) {
+      return res
+        .status(400)
+        .json(new ApiError(400, "Group Name Already Exists"));
+    }
+
+    if (!members || members.length === 0) {
+      return res
+        .status(400)
+        .json(new ApiError(400, "At Least One Participant required"));
+    }
+    const memberArray = members.split(",");
+    const castedMembers = memberArray.map(
+      (member) => new mongoose.Types.ObjectId(member)
+    );
+
+    const groupPicPath = req.file?.path;
+
+    let groupPic;
+    if (groupPicPath) {
+      groupPic = await uploadOnCloudinary(groupPicPath);
+    }
+
+    const group = await Group.create({
+      groupName,
+      type: type || "Home",
+      description: description || "",
+      creator: user?._id,
+      members: castedMembers,
+      groupPic:
+        groupPic?.url ||
+        "https://res.cloudinary.com/djdovu3h2/image/upload/v1721403735/samples/cloudinary-icon.png",
+    });
+
+    // const newGroups = user.groups.push(group);
+    // const updatedUser = await User.findById(
+    //   user?._id,
+    //   {
+    //     $set: {
+    //       groups: newGroups,
+    //     },
+    //   },
+    //   {
+    //     new: true,
+    //   }
+    // );
+    return res
+      .status(201)
+      .json(new ApiResponse(201, group, "Group Creared Successfully"));
+  } catch (error) {
+    return res.status(500).json({
+      apiError: new ApiError(500, "Error in creating group"),
+      message: error.message,
+    });
+  }
+});
+export const getGroups = asyncHandler(async (req, res) => {
+  try {
+    // const groupIds = req.user.groups;
+    const groupList = await Group.find({
+      creator: req.user?._id,
+    });
+    return res
+      .status(200)
+      .json(new ApiResponse(200, groupList, "Group Data Fetched"));
+  } catch (error) {
+    return res.status(500).json({
+      apiError: new ApiError(500, "Issue in Fetching Groups"),
+      message: error.message,
+    });
+  }
+});
+export const deleteGroup = asyncHandler(async (req, res) => {
+  try {
+    const { groupId } = req.body;
+    if (!groupId) {
+      return res.status(400).json(new ApiError(400, "Group ID Required"));
+    }
+    const user = req.user;
+    const currentGroups = user?.groups;
+    if (currentGroups.length === 0) {
+      return res.status(400).json(new ApiError(400, "No Groups"));
+    }
+    const updatedGroups = currentGroups.filter(
+      (group) => group?._id !== groupId
+    );
+
+    if (updatedGroups.length === currentGroups.length) {
+      return res
+        .status(400)
+        .json(new ApiError(400, "Not included in this Group"));
+    }
+    const newUser = await User.findOneAndUpdate(
+      user._id,
+      {
+        $set: {
+          groups: updatedGroups,
+        },
+      },
+      { new: true }
+    ).select("-password -refreshToken");
+    if (!newUser) {
+      return res.status(500).json(new ApiError(500, "Issue in Saving Data"));
+    }
+    const response = await Group.findByIdAndDelete(groupId);
+    if (!response) {
+      return res.status(400).json(new ApiError(400, "Issue In Credentials"));
+    }
+    return res
+      .status(200)
+      .json(new ApiResponse(200, newUser, `Group Deleted Successfully`));
   } catch (error) {
     return res.status(500).json({
       apiError: new ApiError(500, "Issue in Friend Deletion"),

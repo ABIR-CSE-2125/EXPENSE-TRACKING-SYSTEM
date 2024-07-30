@@ -19,11 +19,12 @@ app.use(cookieParser());
 // route imports
 import userRouter from "./routes/user.route.js";
 // import friendsRouter from "./routes/friends.route.js";
+import expenseRouter from "./routes/expense.route.js";
 // routings
 
 const v1ApiRootUrl = "/api/v1";
 
 app.use(v1ApiRootUrl + "/user", userRouter);
 // app.use(v1ApiRootUrl + "/api/v1/friends", friendsRouter);
-
+app.use(v1ApiRootUrl + "/expense", expenseRouter);
 export default app;

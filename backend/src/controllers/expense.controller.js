@@ -82,3 +82,93 @@ export const addExpense = asyncHandler(async (req, res) => {
     });
   }
 });
+
+export const getExpenses = asyncHandler(async (req, res) => {
+  try {
+    const user = req.user;
+    const expenses = await Expense.find({ paidBy: user?._id });
+    if (!expenses) {
+      return res
+        .status(500)
+        .json(new ApiError(500, "Mongo Error : No Expense Found"));
+    }
+    return res
+      .status(200)
+      .json(new ApiResponse(200, expenses, "Retrieved Expenses"));
+  } catch (error) {
+    return res.status(500).json({
+      apiError: new ApiError(500, "Issue in Retriving Expense Data"),
+      message: error.message,
+    });
+  }
+});
+
+export const totalDebt = asyncHandler(async (req, res) => {
+  try {
+    let debit = await Debt.aggregate([
+      {
+        $match: {
+          debtor: req.user?._id,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalAmount: { $sum: "$amount" },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          totalAmount: 1,
+        },
+      },
+    ]);
+
+    if (!debit || debit.length === 0) debit = 0;
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { debtAmount: debit }, "Debitable amount"));
+  } catch (error) {
+    return res.status(500).json({
+      apiError: new ApiError(500, "Issue in Fetching Debitable Amount"),
+      message: error.message,
+    });
+  }
+});
+
+export const totalCredit = asyncHandler(async (req, res) => {
+  try {
+    let credit = await Debt.aggregate([
+      {
+        $match: {
+          creditor: req.user?._id,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalAmount: { $sum: "$amount" },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          totalAmount: 1,
+        },
+      },
+    ]);
+
+    if (!credit || credit.length === 0) credit = 0;
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, { creditAmount: credit }, "Creditable amount")
+      );
+  } catch (error) {
+    return res.status(500).json({
+      apiError: new ApiError(500, "Issue in Fetching Creditable Amount"),
+      message: error.message,
+    });
+  }
+});

@@ -1,12 +1,12 @@
 import { Schema, model } from "mongoose";
 const debtSchema = new Schema(
   {
-    from: {
+    debtor: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-    to: {
+    creditor: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,

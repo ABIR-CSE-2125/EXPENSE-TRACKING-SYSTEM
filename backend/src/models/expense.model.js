@@ -7,7 +7,7 @@ const splitDataSchema = new Schema({
     ref: "User",
     required: true,
   },
-  share: {
+  splitAmount: {
     type: Number,
     required: true,
     default: 0,
@@ -46,16 +46,15 @@ const expenseSchema = new Schema(
       required: true,
       default: false,
     },
-    isGroup: {
-      type: Boolean,
-      required: true,
-      default: false,
+    group: {
+      type: Schema.Types.ObjectId,
+      ref: "Group",
     },
     date: {
-      type: Date,
+      type: String,
       required: true,
     },
-    splitInfo: { type: [splitDataSchema], default: [] },
+    splitInfo: { type: [splitDataSchema] },
   },
   { timestamps: true }
 );

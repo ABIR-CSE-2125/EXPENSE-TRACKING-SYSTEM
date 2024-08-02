@@ -94,13 +94,13 @@ export const getExpenses = asyncHandler(async (req, res) => {
     if (friend_id !== null) {
       expenses = await Expense.find({
         $or: [{ paidBy: friend }, { "splitInfo.member": friend }], // Include expenses where user is payer or in splitInfo
-      });
+      }).sort({ updatedAt: -1 });
     } else if (group_id !== null) {
-      expenses = await Expense.find({ group });
+      expenses = await Expense.find({ group }).sort({ updatedAt: -1 });
     } else {
       expenses = await Expense.find({
         $or: [{ paidBy: userId }, { "splitInfo.member": userId }], // Include expenses where user is payer or in splitInfo
-      });
+      }).sort({ updatedAt: -1 });
     }
 
     if (!expenses || expenses.length === 0) {
@@ -124,14 +124,15 @@ export const getExpenses = asyncHandler(async (req, res) => {
 
 export const editExpense = asyncHandler(async (req, res) => {
   try {
-    const { shares, description, type, date, amount, groupId, eId } = req.body;
+    const { shares, description, type, date, amount, groupId, expenseId } =
+      req.body;
     const splitInfo = shares.map((share) => ({
       member: new mongoose.Types.ObjectId(share.id + ""),
       splitAmount: share.amount,
       paid,
     }));
 
-    const oldExpense = await Expense.findById(eId);
+    const oldExpense = await Expense.findById(expenseId);
     if (!oldExpense) {
       return res
         .status(500)

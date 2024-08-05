@@ -493,14 +493,14 @@ export const createGroups = asyncHandler(async (req, res) => {
     const castedMembers = memberArray.map(
       (member) => new mongoose.Types.ObjectId(member)
     );
-
+    castedMembers.push(user._id);
     const groupPicPath = req.file?.path;
 
     let groupPic;
     if (groupPicPath) {
       groupPic = await uploadOnCloudinary(groupPicPath);
     }
-
+    console.log(description);
     const group = await Group.create({
       groupName,
       type: type || "Home",
@@ -511,19 +511,6 @@ export const createGroups = asyncHandler(async (req, res) => {
         groupPic?.url ||
         "https://res.cloudinary.com/djdovu3h2/image/upload/v1721403735/samples/cloudinary-icon.png",
     });
-
-    // const newGroups = user.groups.push(group);
-    // const updatedUser = await User.findById(
-    //   user?._id,
-    //   {
-    //     $set: {
-    //       groups: newGroups,
-    //     },
-    //   },
-    //   {
-    //     new: true,
-    //   }
-    // );
     return res
       .status(201)
       .json(new ApiResponse(201, group, "Group Creared Successfully"));
@@ -537,9 +524,8 @@ export const createGroups = asyncHandler(async (req, res) => {
 export const getGroups = asyncHandler(async (req, res) => {
   try {
     // const groupIds = req.user.groups;
-    const groupList = await Group.find({
-      creator: req.user?._id,
-    });
+    const groupList = await Group.find({ creator: req.user?._id });
+
     return res
       .status(200)
       .json(new ApiResponse(200, groupList, "Group Data Fetched"));
@@ -556,42 +542,16 @@ export const deleteGroup = asyncHandler(async (req, res) => {
     if (!groupId) {
       return res.status(400).json(new ApiError(400, "Group ID Required"));
     }
-    const user = req.user;
-    const currentGroups = user?.groups;
-    if (currentGroups.length === 0) {
-      return res.status(400).json(new ApiError(400, "No Groups"));
-    }
-    const updatedGroups = currentGroups.filter(
-      (group) => group?._id !== groupId
-    );
-
-    if (updatedGroups.length === currentGroups.length) {
-      return res
-        .status(400)
-        .json(new ApiError(400, "Not included in this Group"));
-    }
-    const newUser = await User.findOneAndUpdate(
-      user._id,
-      {
-        $set: {
-          groups: updatedGroups,
-        },
-      },
-      { new: true }
-    ).select("-password -refreshToken");
-    if (!newUser) {
-      return res.status(500).json(new ApiError(500, "Issue in Saving Data"));
-    }
     const response = await Group.findByIdAndDelete(groupId);
     if (!response) {
       return res.status(400).json(new ApiError(400, "Issue In Credentials"));
     }
     return res
       .status(200)
-      .json(new ApiResponse(200, newUser, `Group Deleted Successfully`));
+      .json(new ApiResponse(200, {}, `Group Deleted Successfully`));
   } catch (error) {
     return res.status(500).json({
-      apiError: new ApiError(500, "Issue in Friend Deletion"),
+      apiError: new ApiError(500, "Issue in Group Deletion"),
       message: error.message,
     });
   }

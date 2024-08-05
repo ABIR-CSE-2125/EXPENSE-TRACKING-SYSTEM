@@ -91,15 +91,6 @@ const userSchema = new Schema(
       ],
       default: [],
     },
-    groups: {
-      type: [
-        {
-          type: Schema.Types.ObjectId,
-          ref: "Group",
-        },
-      ],
-      default: [],
-    },
   },
   {
     timestamps: true,

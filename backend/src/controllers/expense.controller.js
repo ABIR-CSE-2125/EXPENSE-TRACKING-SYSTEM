@@ -127,11 +127,14 @@ export const editExpense = asyncHandler(async (req, res) => {
   try {
     const { shares, description, type, date, amount, groupId, expenseId } =
       req.body;
-    const splitInfo = shares.map((share) => ({
-      member: new mongoose.Types.ObjectId(share.id + ""),
-      splitAmount: share.amount,
-      paid,
-    }));
+    let splitInfo = [];
+    if (shares) {
+      splitInfo = shares.map((share) => ({
+        member: new mongoose.Types.ObjectId(share.id + ""),
+        splitAmount: share.amount,
+        paid: share.paid,
+      }));
+    }
 
     const oldExpense = await Expense.findById(expenseId);
     if (!oldExpense) {
@@ -140,12 +143,13 @@ export const editExpense = asyncHandler(async (req, res) => {
         .json(new ApiError(500, "Expense Record not found"));
     }
     // console.log(oldExpense);
-    const session = new mongoose.startSession();
-    await session.startTransaction();
+    const session = await mongoose.startSession();
+    session.startTransaction();
     for (const splitObj of splitInfo) {
+      if (splitObj.member.toString() === req.user?._id.toString()) continue;
       const updateddebtInfo = await Debt.findOneAndUpdate(
         {
-          $or: [{ splitId: oldExpense?._id }, { debtor: splitObj.member }],
+          $and: [{ splitId: oldExpense?._id }, { debtor: splitObj.member }],
         },
         {
           $set: {
@@ -154,6 +158,7 @@ export const editExpense = asyncHandler(async (req, res) => {
         },
         {
           $new: true,
+          session,
         }
       );
       if (!updateddebtInfo) {
@@ -166,7 +171,7 @@ export const editExpense = asyncHandler(async (req, res) => {
       }
     }
     const newExpense = await Expense.findByIdAndUpdate(
-      oldExpense?._id,
+      expenseId,
       {
         $set: {
           description,
@@ -177,7 +182,7 @@ export const editExpense = asyncHandler(async (req, res) => {
           group: groupId || null,
         },
       },
-      { $new: true }
+      { $new: true, session }
     );
 
     if (!newExpense) {

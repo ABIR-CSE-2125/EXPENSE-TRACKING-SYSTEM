@@ -1,9 +1,9 @@
 import { asyncHandler } from "../utils/asyncHandler.util.js";
-import { Expense } from "../models/expense.model.js";
-import { Debt } from "../models/debt.model.js";
 import { ApiResponse } from "../utils/apiResponse.util.js";
 import { ApiError } from "../utils/apiError.util.js";
 import mongoose from "mongoose";
+import { Expense } from "../models/expense.model.js";
+import { Debt } from "../models/debt.model.js";
 import { LATESTENTRIESCOUNT } from "../config.js";
 export const addExpense = asyncHandler(async (req, res) => {
   try {
@@ -15,7 +15,7 @@ export const addExpense = asyncHandler(async (req, res) => {
 
     // When there is no bill splitting
     if (isSplit == 0) {
-      console.log(isSplit);
+      // console.log(isSplit);
       const expense = await Expense.create({
         paidBy,
         description: description || " ",
@@ -60,6 +60,7 @@ export const addExpense = asyncHandler(async (req, res) => {
     }
 
     for (const splitObj of splitInfo) {
+      if (splitObj.member.toString() === req.user?._id.toString()) continue;
       const debtInfo = await Debt.create({
         creditor: paidBy,
         debtor: splitObj.member,
@@ -88,14 +89,14 @@ export const getExpenses = asyncHandler(async (req, res) => {
   try {
     const { friend_id, group_id } = req.query;
     const userId = req.user?._id;
-    const friend = new mongoose.Types.ObjectId(friend_id + "");
-    const group = new mongoose.Types.ObjectId(group_id + "");
     let expenses;
-    if (friend_id !== null) {
+    if (friend_id) {
+      const friend = new mongoose.Types.ObjectId(friend_id + "");
       expenses = await Expense.find({
         $or: [{ paidBy: friend }, { "splitInfo.member": friend }], // Include expenses where user is payer or in splitInfo
       }).sort({ updatedAt: -1 });
-    } else if (group_id !== null) {
+    } else if (group_id) {
+      const group = new mongoose.Types.ObjectId(group_id + "");
       expenses = await Expense.find({ group }).sort({ updatedAt: -1 });
     } else {
       expenses = await Expense.find({
@@ -126,11 +127,14 @@ export const editExpense = asyncHandler(async (req, res) => {
   try {
     const { shares, description, type, date, amount, groupId, expenseId } =
       req.body;
-    const splitInfo = shares.map((share) => ({
-      member: new mongoose.Types.ObjectId(share.id + ""),
-      splitAmount: share.amount,
-      paid,
-    }));
+    let splitInfo = [];
+    if (shares) {
+      splitInfo = shares.map((share) => ({
+        member: new mongoose.Types.ObjectId(share.id + ""),
+        splitAmount: share.amount,
+        paid: share.paid,
+      }));
+    }
 
     const oldExpense = await Expense.findById(expenseId);
     if (!oldExpense) {
@@ -138,13 +142,14 @@ export const editExpense = asyncHandler(async (req, res) => {
         .status(500)
         .json(new ApiError(500, "Expense Record not found"));
     }
-    console.log(oldExpense);
-    const session = new mongoose.startSession();
-    await session.startTransaction();
+    // console.log(oldExpense);
+    const session = await mongoose.startSession();
+    session.startTransaction();
     for (const splitObj of splitInfo) {
+      if (splitObj.member.toString() === req.user?._id.toString()) continue;
       const updateddebtInfo = await Debt.findOneAndUpdate(
         {
-          $or: [{ splitId: oldExpense?._id }, { debtor: splitObj.member }],
+          $and: [{ splitId: oldExpense?._id }, { debtor: splitObj.member }],
         },
         {
           $set: {
@@ -153,6 +158,7 @@ export const editExpense = asyncHandler(async (req, res) => {
         },
         {
           $new: true,
+          session,
         }
       );
       if (!updateddebtInfo) {
@@ -165,7 +171,7 @@ export const editExpense = asyncHandler(async (req, res) => {
       }
     }
     const newExpense = await Expense.findByIdAndUpdate(
-      oldExpense?._id,
+      expenseId,
       {
         $set: {
           description,
@@ -176,7 +182,7 @@ export const editExpense = asyncHandler(async (req, res) => {
           group: groupId || null,
         },
       },
-      { $new: true }
+      { $new: true, session }
     );
 
     if (!newExpense) {
@@ -201,6 +207,8 @@ export const editExpense = asyncHandler(async (req, res) => {
 });
 export const totalDebt = asyncHandler(async (req, res) => {
   try {
+    console.log(req.user._id);
+
     let debit = await Debt.aggregate([
       {
         $match: {

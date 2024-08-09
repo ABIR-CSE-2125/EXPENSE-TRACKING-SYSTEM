@@ -20,8 +20,8 @@ const generateAccessAndRefereshTokens = async (userId) => {
     const user = await User.findById(userId);
     const accessToken = user.generateAccessToken();
     const refreshToken = user.generateRefreshToken();
-    console.log(accessToken);
-    console.log(refreshToken);
+    // console.log(accessToken);
+    // console.log(refreshToken);
     user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
 
@@ -36,7 +36,7 @@ export const register = asyncHandler(async (req, res) => {
     const { userName, email, password, firstName, lastName, currency } =
       req.body;
 
-    console.log(req.body);
+    // console.log(req.body);
     if (
       [userName, email, password, firstName, lastName, currency].some(
         (field) => field === ""
@@ -52,26 +52,20 @@ export const register = asyncHandler(async (req, res) => {
     const user = await User.findOne({
       $or: [{ userName: username }, { email }],
     });
-    console.log("Into the controller");
 
+    let profilePicLocalPath;
+
+    console.log("Check File path ", req.file);
+    if (req.file) {
+      profilePicLocalPath = req.file?.path;
+    }
     if (user) {
       return res
         .status(409)
         .json(new ApiError(409, "User with username or email already exists"));
     }
 
-    let profilePicLocalPath;
-
-    if (
-      req.files &&
-      Array.isArray(req.files.image) &&
-      req.files.image.length > 0
-    ) {
-      profilePicLocalPath = req.files?.image[0].path;
-    }
-
     const profilePic = await uploadOnCloudinary(profilePicLocalPath);
-    // console.log("User Creation start");
     const newUser = await User.create({
       userName: username,
       password,
@@ -83,7 +77,6 @@ export const register = asyncHandler(async (req, res) => {
         profilePic?.url ||
         "https://res.cloudinary.com/djdovu3h2/image/upload/v1721574760/user_s1tu6k.png",
     });
-    // console.log("User Creation complete");
     const createdUser = await User.findById(newUser._id).select(
       "-password -refreshToken -friends -groups"
     );
@@ -142,17 +135,13 @@ export const login = asyncHandler(async (req, res) => {
     const loggedInUser = await User.findById(user._id).select(
       "-password -refreshToken -friends -groups"
     );
+    console.log(loggedInUser);
+
     return res
       .status(200)
       .cookie("accessToken", accessToken, options)
       .cookie("refreshToken", refreshToken, options)
-      .json(
-        new ApiResponse(200, {
-          userDate: loggedInUser,
-          accessToken,
-          refreshToken,
-        })
-      );
+      .json(new ApiResponse(200, loggedInUser, "Login Success full"));
   } catch (error) {
     return res.status(500).json({
       Error: new ApiError(500, "Issue in Login"),

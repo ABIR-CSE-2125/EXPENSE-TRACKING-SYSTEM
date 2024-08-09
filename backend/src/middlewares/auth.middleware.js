@@ -25,8 +25,9 @@ export const isAuthenicated = asyncHandler(async (req, res, next) => {
     req.user = verifiedUser;
     next();
   } catch (error) {
-    return res
-      .status(500)
-      .json(new ApiError(500, error.message + "\nIssue in Authentication"));
+    return res.status(500).json({
+      apiError: new ApiError(500, "Issue in authorization"),
+      message: error.message,
+    });
   }
 });

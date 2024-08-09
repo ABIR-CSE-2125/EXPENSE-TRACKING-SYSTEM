@@ -21,15 +21,7 @@ import { isAuthenicated } from "../middlewares/auth.middleware.js";
 const router = Router();
 
 // user routes
-router.route("/register").post(
-  upload.fields([
-    {
-      name: "image",
-      maxCount: 1,
-    },
-  ]),
-  register
-); // Register Or SignUp a User aka Create User
+router.route("/register").post(upload.single("image"), register); // Register Or SignUp a User aka Create User
 
 router.route("/login").post(login); // Login a User
 

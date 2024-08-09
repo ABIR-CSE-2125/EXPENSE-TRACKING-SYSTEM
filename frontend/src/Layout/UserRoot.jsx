@@ -1,8 +1,7 @@
 import React from "react";
-import { Header, Footer, SideBar } from "./components";
+import { Header, Footer, SideBar } from "../components";
 import { Outlet } from "react-router-dom";
-import SideBar from "./components/SideBar";
-function Root(props) {
+function UserRoot(props) {
   return (
     <>
       <Header />
@@ -10,14 +9,13 @@ function Root(props) {
         <div class="mx-1 h-full bg-red-400 sm:col-span-3">
           <SideBar />
         </div>
-        <div class="mx-1 h-full bg-cyan-400 sm:col-span-9">
+        <div class="h-full sm:col-span-9">
           <Outlet />
         </div>
       </div>
-      <Outlet />
       <Footer />
     </>
   );
 }
 
-export default Root;
+export default UserRoot;

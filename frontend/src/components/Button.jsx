@@ -14,6 +14,7 @@ function Button({
       className={`px-4 py-2 rounded-lg ${bgColor} ${textColor} ${className} `}
       onClick={eventHandler}
       {...props}
+      type={type}
     >
       {children}
     </button>

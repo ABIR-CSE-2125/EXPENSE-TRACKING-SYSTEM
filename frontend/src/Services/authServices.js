@@ -67,8 +67,9 @@ export const logoutService = async () => {
   try {
     const url = v1ApiRootUrl + "/user/logout";
     const response = await axios.post(url);
-    if (response?.success === true) {
+    if (response?.data.success === true) {
       console.log("User Logged Out Successfully");
+      return;
     } else {
       console.error("Logout Failed");
     }
@@ -81,9 +82,78 @@ export const getUserDetailsService = async () => {
   try {
     const url = v1ApiRootUrl + "/user";
     const response = await axios(url);
-    if (response?.success === true) return response?.data;
+    if (response?.data.success === true) return response?.data;
     return null;
   } catch (error) {
     console.error("Auth Service Error :: Get Service :: ", error.message);
+  }
+};
+
+export const editProfileService = async ({
+  firstName,
+  lastName,
+  email,
+  phone,
+  sex,
+  city,
+  currency,
+}) => {
+  try {
+    const url = v1ApiRootUrl + "/user/update";
+    const response = await axios.patch(url, {
+      firstName,
+      lastName,
+      email,
+      phone,
+      sex,
+      city,
+      currency,
+    });
+    if (response?.data.success === true) {
+      return response.data.data;
+    }
+    return null;
+  } catch (error) {
+    console.error(
+      "Auth Service Error :: Update Profile Service :: ",
+      error.message
+    );
+  }
+};
+export const editProfilePicService = async ({ image }) => {
+  try {
+    const url = v1ApiRootUrl + "/user/update-ProfilePic";
+    const response = await axios.patch(
+      url,
+      { image: image[0] },
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    if (response?.data?.success === true) {
+      return response.data?.data;
+    }
+    return null;
+  } catch (error) {
+    console.error(
+      "Auth Service Error :: Update Profile Pic Service :: ",
+      error.message
+    );
+  }
+};
+
+export const changePasswordServie = async ({ oldPassword, newPassword }) => {
+  try {
+    const url = v1ApiRootUrl + "/user/changePassword";
+    const response = await axios.patch(url, { oldPassword, newPassword });
+    if (response?.data?.success === true) return "success";
+    return null;
+  } catch (error) {
+    console.error(
+      "Auth Service Error :: Change Password Service :: ",
+      error.message
+    );
   }
 };

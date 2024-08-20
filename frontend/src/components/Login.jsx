@@ -21,7 +21,7 @@ function Login() {
 
       if (userData) {
         dispatch(storeLogin(userData));
-        // navigate("/");
+        navigate("/");
       }
     } catch (error) {
       setError(error.message);

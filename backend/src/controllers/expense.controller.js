@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import { Expense } from "../models/expense.model.js";
 import { Debt } from "../models/debt.model.js";
 import { LATESTENTRIESCOUNT } from "../config.js";
+
 export const addExpense = asyncHandler(async (req, res) => {
   try {
     const { isSplit, groupId } = req.query;
@@ -84,7 +85,6 @@ export const addExpense = asyncHandler(async (req, res) => {
     });
   }
 });
-
 export const getExpenses = asyncHandler(async (req, res) => {
   try {
     const { friend_id, group_id } = req.query;
@@ -122,7 +122,6 @@ export const getExpenses = asyncHandler(async (req, res) => {
     });
   }
 });
-
 export const editExpense = asyncHandler(async (req, res) => {
   try {
     const { shares, description, type, date, amount, groupId, expenseId } =
@@ -240,7 +239,6 @@ export const totalDebt = asyncHandler(async (req, res) => {
     });
   }
 });
-
 export const totalCredit = asyncHandler(async (req, res) => {
   try {
     let credit = await Debt.aggregate([
@@ -276,7 +274,6 @@ export const totalCredit = asyncHandler(async (req, res) => {
     });
   }
 });
-
 export const getLatestEpenses = asyncHandler(async (req, res) => {
   try {
     const entryCount = LATESTENTRIESCOUNT;

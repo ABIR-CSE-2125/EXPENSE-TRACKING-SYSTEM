@@ -176,7 +176,7 @@ export const getRecentExpenseService = async () => {
   }
 };
 
-// check the response
+// aggregate serices
 export const getTotalDebtAmountExpenseService = async () => {
   try {
     const url = v1ApiRootUrl + "/expense/total-debt-amount";
@@ -205,3 +205,17 @@ export const getTotalCreditAmountExpenseService = async () => {
     );
   }
 };
+// // utility Services
+// export const getAllUsers = async () => {
+//   try {
+//     const url = v1ApiRootUrl + "/user/all";
+//     const response = await axios.get(url);
+//     if (response?.data?.success === true) return response.data?.data;
+//     return null;
+//   } catch (error) {
+//     console.error(
+//       "User Service Error :: Get All Users Utility Service :: ",
+//       error.message
+//     );
+//   }
+// };

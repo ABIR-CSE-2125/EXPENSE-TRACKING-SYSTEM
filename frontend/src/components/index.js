@@ -7,10 +7,11 @@ import Button from "./Button";
 import Container from "./Container";
 import FriendForm from "./FriendForm";
 import GroupForm from "./GroupForm";
-import Input from "./Input";
 import Login from "./Login";
 import SignUp from "./SignUp";
 import Logo from "./Logo";
+import Dropdown from "./Dropdown";
+import Input from "./Input";
 export {
   Footer,
   Header,
@@ -23,6 +24,7 @@ export {
   GroupForm,
   Login,
   SignUp,
-  Input,
   Logo,
+  Input,
+  Dropdown,
 };

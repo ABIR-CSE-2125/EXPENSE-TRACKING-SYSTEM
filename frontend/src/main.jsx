@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { Friend, Group, Login, SignUp } from "./components";
+import { ExpenseForm, Friend, Group, Login, SignUp } from "./components";
 import HomePage from "./pages/Dashboard/HomePage";
 import UserRoot from "./Layout/UserRoot";
 import AuthRoot from "./Layout/AuthRoot";
@@ -41,7 +41,16 @@ const routes = [
       },
     ],
   },
-  //form routes not defined here. as they demand page refresh
+  {
+    path: "/expense",
+    element: <AuthRoot />,
+    children: [
+      {
+        path: "add",
+        element: <ExpenseForm />,
+      },
+    ],
+  },
 ];
 const router = createBrowserRouter(routes, { basename: "/app" });
 ReactDOM.createRoot(document.getElementById("root")).render(

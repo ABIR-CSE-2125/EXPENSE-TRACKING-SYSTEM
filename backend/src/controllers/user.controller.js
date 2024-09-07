@@ -11,8 +11,8 @@ import { Group } from "../models/group.model.js";
 import mongoose from "mongoose";
 const options = {
   httpOnly: true,
-  // when we push in production make secure true
-  //   secure: true,
+  sameSite: "None",
+  secure: true,
 };
 // Authentication APIs
 const generateAccessAndRefereshTokens = async (userId) => {
@@ -139,6 +139,7 @@ export const login = asyncHandler(async (req, res) => {
 
     return res
       .status(200)
+      .header("Access-Control-Allow-Credentials", "true")
       .cookie("accessToken", accessToken, options)
       .cookie("refreshToken", refreshToken, options)
       .json(new ApiResponse(200, loggedInUser, "Login Success full"));

@@ -2,25 +2,40 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { login as storeLogin } from "../store/authSlice";
 import { Button, Input, Logo } from "./index";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
 import { loginService } from "../Services/authServices";
 function Login() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { register, handleSubmit } = useForm();
+  // const { register, handleSubmit } = useForm();
   const [error, setError] = useState("");
+  const [email, setEamil] = useState("");
+  const [password, setPassword] = useState("");
 
-  const login = async (data) => {
+  const changeEmail = (event) => {
+    setEamil(event.target.value);
+  };
+  const changePassword = (event) => {
+    setPassword(event.target.value);
+  };
+
+  // const state = useSelector((state) => state);
+  const login = async (event) => {
+    event.preventDefault(); // Prevent default form submission
     setError("");
-    console.log("Inside the login ", data);
-
+    // console.log("Inside the login ");
     try {
-      const userData = await loginService(data);
+      // console.log("email : ", email);
+      // console.log("password : ", password);
+
+      const userData = await loginService({ email, password });
       console.log("User Data ", userData);
 
       if (userData) {
+        // console.log("inside store");
         dispatch(storeLogin(userData));
+        // console.log("after dispatch : \n", state);
         navigate("/");
       }
     } catch (error) {
@@ -51,28 +66,19 @@ function Login() {
           </Link>
         </p>
         {error && <p className="text-red-600 mt-8 text-center">{error}</p>}
-        <form onSubmit={handleSubmit(login)} className="mt-8">
+        <form onSubmit={login} className="mt-8">
           <div className="space-y-5">
             <Input
               label="Email: "
               placeholder="Enter your email"
               type="email"
-              {...register("email", {
-                required: true,
-                validate: {
-                  matchPatern: (value) =>
-                    /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(value) ||
-                    "Email address must be a valid address",
-                },
-              })}
+              eventHandler={changeEmail}
             />
             <Input
               label="Password: "
               type="password"
               placeholder="Enter your password"
-              {...register("password", {
-                required: true,
-              })}
+              eventHandler={changePassword}
             />
             <Button type="submit" className="w-full">
               Sign in

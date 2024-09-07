@@ -1,6 +1,9 @@
 import React, { useId } from "react";
 
-function Input({ label, type = "text", className = "", ...props }, ref) {
+function Input(
+  { label, type = "text", className = "", eventHandler = null, ...props },
+  ref
+) {
   const id = useId();
   return (
     <div className="w-full">
@@ -15,6 +18,7 @@ function Input({ label, type = "text", className = "", ...props }, ref) {
         ref={ref}
         {...props}
         id={id}
+        onChange={eventHandler}
       />
     </div>
   );

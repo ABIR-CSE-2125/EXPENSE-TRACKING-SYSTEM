@@ -9,6 +9,10 @@ function ExpenseForm(props) {
   const [splitStatus, setSplitStatus] = useState(false);
   const [splitMode, setSplitMode] = useState("equal");
   const [allIds, setAllIds] = useState([]);
+  const stateUserData = useSelector((state) => state.userData);
+  console.log("redux state", stateUserData);
+  const paidBy = stateUserData?._id;
+
   const [shares, setShares] = useState([
     {
       id: paidBy,
@@ -17,9 +21,6 @@ function ExpenseForm(props) {
     },
   ]);
   const [hasMounted, setHasMounted] = useState(false);
-
-  const paidByUserData = useSelector((state) => state?.userData);
-  const paidBy = paidByUserData?._id;
 
   const defalutValues = {
     type: "Home",

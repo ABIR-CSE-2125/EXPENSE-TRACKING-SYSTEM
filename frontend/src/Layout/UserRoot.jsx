@@ -5,11 +5,11 @@ function UserRoot(props) {
   return (
     <>
       <Header />
-      <div class="my-2 grid h-screen w-full gap-0 bg-stone-200 px-1 sm:grid-cols-12">
-        <div class="mx-1 h-full bg-red-400 sm:col-span-3">
+      <div className="my-2 grid h-screen w-full gap-0 bg-stone-200 px-1 sm:grid-cols-12">
+        <div className="mx-1 h-full bg-red-400 sm:col-span-3">
           <SideBar />
         </div>
-        <div class="h-full sm:col-span-9">
+        <div className="h-full sm:col-span-9">
           <Outlet />
         </div>
       </div>

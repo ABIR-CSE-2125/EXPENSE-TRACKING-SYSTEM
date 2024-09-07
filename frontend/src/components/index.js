@@ -12,6 +12,7 @@ import SignUp from "./SignUp";
 import Logo from "./Logo";
 import Dropdown from "./Dropdown";
 import Input from "./Input";
+import ExpenseForm from "./ExpenseForm"
 export {
   Footer,
   Header,
@@ -27,4 +28,5 @@ export {
   Logo,
   Input,
   Dropdown,
+  ExpenseForm
 };

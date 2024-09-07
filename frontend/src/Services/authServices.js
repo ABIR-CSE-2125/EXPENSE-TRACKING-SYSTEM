@@ -47,11 +47,15 @@ export const registerService = async ({
 export const loginService = async ({ email = null, password }) => {
   try {
     const url = v1ApiRootUrl + "/user/login";
-    const response = await axios.post(url, { email, password });
-    console.log("service : ", response);
+    const response = await axios.post(
+      url,
+      { email, password },
+      { withCredentials: true }
+    );
+    // console.log("service : ", response.data);
 
     if (response?.data.success === true) {
-      console.log("service ", response);
+      // console.log("service ", response);
       return response?.data.data;
     } else {
       // TODO: Hadeling the 401 reponse is pending

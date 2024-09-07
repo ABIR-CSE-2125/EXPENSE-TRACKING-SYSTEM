@@ -3,11 +3,12 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { ExpenseForm, Friend, Group, Login, SignUp } from "./components";
+import { PersistGate } from "redux-persist/integration/react";
 import HomePage from "./pages/Dashboard/HomePage";
 import UserRoot from "./Layout/UserRoot";
 import AuthRoot from "./Layout/AuthRoot";
 import { Provider } from "react-redux";
-import store from "./store/store";
+import { store, persistor } from "./store/store";
 const routes = [
   {
     path: "/",
@@ -56,7 +57,9 @@ const router = createBrowserRouter(routes, { basename: "/app" });
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <Provider store={store}>
-      <RouterProvider router={router} />
+      <PersistGate loading={null} persistor={persistor}>
+        <RouterProvider router={router} />
+      </PersistGate>
     </Provider>
   </React.StrictMode>
 );

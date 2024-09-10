@@ -17,7 +17,9 @@ export const addFriendsService = async ({ email }) => {
 export const getFriendsService = async () => {
   try {
     const url = v1ApiRootUrl + "/user/friends";
-    const response = await axios.get(url);
+    const response = await axios.get(url, { withCredentials: true });
+    // console.log("friends : ", response.data.data);
+
     if (response?.data?.success === true) return response.data?.data;
     return null;
   } catch (error) {

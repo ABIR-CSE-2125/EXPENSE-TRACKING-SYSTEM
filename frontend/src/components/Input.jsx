@@ -1,27 +1,34 @@
-import React, { useId } from "react";
+import React, { useId, forwardRef, memo } from "react";
 
-function Input(
-  { label, type = "text", className = "", eventHandler = null, ...props },
-  ref
-) {
-  const id = useId();
-  return (
-    <div className="w-full">
-      {label && (
-        <label className="inline-block mb-1 pl-1" htmlFor={id}>
-          {label}
-        </label>
-      )}
-      <input
-        type={type}
-        className={`${className}`}
-        ref={ref}
-        {...props}
-        id={id}
-        onChange={eventHandler}
-      />
-    </div>
-  );
-}
+const Input = memo(
+  forwardRef(
+    (
+      { label, type = "text", className = "", eventHandler = null, ...props },
+      ref
+    ) => {
+      const id = useId();
+      return (
+        <div className="w-full">
+          {label && (
+            <label
+              className="mr-9 text-lg font-medium text-gray-700"
+              htmlFor={id}
+            >
+              {label}
+            </label>
+          )}
+          <input
+            type={type}
+            className={`${className}`}
+            ref={ref}
+            id={id}
+            onChange={eventHandler}
+            {...props}
+          />
+        </div>
+      );
+    }
+  )
+);
 
-export default React.forwardRef(Input);
+export default Input;

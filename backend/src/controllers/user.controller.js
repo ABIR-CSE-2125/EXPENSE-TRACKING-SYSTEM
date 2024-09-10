@@ -398,6 +398,7 @@ export const getFriends = asyncHandler(async (req, res) => {
         $in: friendsIds,
       },
     }).select("-password -refreshToken -friends -groups");
+    console.log("friends of user", friends);
     return res
       .status(200)
       .json(new ApiResponse(200, friends, "Freinds Data Fetched"));

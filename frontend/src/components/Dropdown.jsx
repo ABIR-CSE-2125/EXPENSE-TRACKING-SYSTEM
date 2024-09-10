@@ -1,6 +1,6 @@
 import React, { useId } from "react";
 
-function Dropdown({ options, label, className, ...props }, ref) {
+function Dropdown({ options, label, className, eventHandler, ...props }, ref) {
   const id = useId();
   return (
     <div className="w-full">
@@ -10,6 +10,7 @@ function Dropdown({ options, label, className, ...props }, ref) {
         id={id}
         ref={ref}
         className={`px-3 py-2 rounded-lg bg-white text-black outline-none focus:bg-gray-50 duration-200 border border-gray-200 w-full ${className}`}
+        onChange={eventHandler}
       >
         {options?.map((option) => (
           <option key={option} value={option}>

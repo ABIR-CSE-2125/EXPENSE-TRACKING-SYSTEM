@@ -41,7 +41,7 @@ export const addExpense = asyncHandler(async (req, res) => {
     const splitInfo = shares.map((share) => ({
       member: new mongoose.Types.ObjectId(share.id + ""),
       splitAmount: share.amount,
-      paid: false,
+      paid: share.paid,
     }));
 
     const expense = await Expense.create({

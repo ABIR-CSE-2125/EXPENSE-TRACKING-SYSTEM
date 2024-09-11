@@ -1,6 +1,7 @@
 import React from "react";
 import { useSelector } from "react-redux";
 import { Container } from "../../components";
+import { Link } from "react-router-dom";
 
 function HomePage(props) {
   const UserData = useSelector((state) => state.userData);

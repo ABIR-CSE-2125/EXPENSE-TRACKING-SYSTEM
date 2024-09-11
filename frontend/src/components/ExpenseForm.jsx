@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { EXPENSE_TYPE_ENUM } from "../constants";
+import { EXPENSE_TYPE_ENUM, v1ApiRootUrl } from "../constants";
 import { Input, Dropdown } from "./index";
 import { getFriendsService } from "../Services/userServices";
-import { useCallback } from "react";
+import axios from "axios";
 
 const ALLFRIENDS = [];
 const splitModes = ["Select", "equal", "exact"];
@@ -19,6 +19,7 @@ function ExpenseForm(props) {
   const [splitStatus, setSplitStatus] = useState(false);
   const [splitMode, setSplitMode] = useState("");
   const [catagory, setCatagory] = useState("Home");
+  const [description, setDescription] = useState("");
   const [allUsers, setAllUsers] = useState([{}]);
   const [date, setDate] = useState(Date.now().toString());
   const [hasMounted, setHasMounted] = useState(false);
@@ -108,11 +109,27 @@ function ExpenseForm(props) {
   // Input handlers--------------------------------------------------------------------------------------------------------
 
   // Total Amount
-  const onChangeTotalAmount = useCallback((e) => {
+  const onChangeTotalAmount = (e) => {
     console.log("totalAmount");
+    const updatedAmount = Number(e.target.value);
+    // console.log(updatedAmount);
+
+    setShares((prevShares) => {
+      const exceptOwner = prevShares.filter(
+        (share) => share.user._id !== paidBy._id
+      );
+
+      return [
+        ...exceptOwner,
+        { user: paidBy, amount: updatedAmount, paid: true },
+      ];
+    });
+    // console.log(shares);
+
+    SetTotalAmount(updatedAmount);
+
     console.log(e.target.value);
-    SetTotalAmount(e.target.value);
-  });
+  };
 
   // Split or Not
   const onChangeSplitStatus = () => {
@@ -141,24 +158,110 @@ function ExpenseForm(props) {
     console.log(e.target.value);
     setDate(e.target.value);
   };
+  const onDescriptionChange = (e) => {
+    console.log("Description");
+    setDescription(e.target.value);
+  };
 
   // Submit Function
-  const handleSubmit = (e) => {
+
+  const checkEqual = () => {
+    let totalByShares = 0;
+    shares.forEach((share) => {
+      totalByShares += share.amount;
+    });
+    if (totalAmount != totalByShares) {
+      console.log(typeof totalByShares, totalByShares);
+      console.log(typeof totalAmount, totalAmount);
+      console.log("Launching Total Amount Not Match Warning");
+      setWarning(
+        "Total Amoount of shares does not match the total amount paid"
+      );
+    } else {
+      setWarning(null);
+    }
+    return warning === null;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (shares.length !== 0 && checkEqual() === false) {
+      console.log("Can't process Further");
+      return;
+    }
     console.log("Submit");
     console.log("owner", paidBy);
     console.log("totalAmount", totalAmount);
     console.log("splitStatus", splitStatus);
     console.log("splitMode", splitMode);
     console.log("catagory", catagory);
-    console.log("date", date);
+    console.log("date", typeof date, date);
     console.log("shares : ", shares);
+
+    let payload = {
+      description: description,
+      type: catagory,
+      amount: totalAmount,
+      date: date,
+    };
+    if (splitStatus === true) {
+      const splitInfo = shares.map((share) => ({
+        id: share.user._id,
+        amount: share.amount,
+        paid: share.paid,
+      }));
+      JSON.stringify(splitInfo);
+      payload = {
+        ...payload,
+        shares: splitInfo,
+      };
+    }
+    JSON.stringify(payload);
+    console.log(payload);
+    const group = null;
+    if (group === null) {
+      const response = await axios.post(
+        v1ApiRootUrl + "/expense/add-expense",
+        { ...payload },
+        {
+          withCredentials: true,
+          params: {
+            isSplit: splitStatus === true ? "1" : "0",
+          },
+        }
+      );
+      console.log(response);
+      return;
+    }
+    const response = await axios.post(
+      v1ApiRootUrl + "/expense/add-expense",
+      { ...payload },
+      {
+        withCredentials: true,
+        params: {
+          isSplit: splitStatus === true ? 1 : 0,
+          group: group,
+        },
+      }
+    );
+    console.log(response);
   };
 
   return (
     <>
       <div className="m-4 p-6 max-w-lg border-2 border-gray-300 bg-gray-100 rounded-lg shadow-lg min-w-fit">
         <form className="space-y-6" onSubmit={handleSubmit}>
+          {/* Desciption */}
+          <div className="flex flex-col">
+            <label className="text-lg font-medium text-gray-700 mb-1">
+              Description
+            </label>
+            <Input
+              placeholder="Description"
+              className="p-3 rounded-md border-2 border-gray-300 bg-white focus:outline-none focus:border-blue-500"
+              eventHandler={onDescriptionChange}
+            />
+          </div>
           {/* Total Amount Input */}
           <div className="flex flex-col">
             <label className="text-lg font-medium text-gray-700 mb-1">
@@ -204,9 +307,6 @@ function ExpenseForm(props) {
               onChange={onChangeSplitStatus}
               label="Split?"
             />
-            {/* <label className="ml-2 text-lg font-medium text-gray-700">
-              Split?
-            </label> */}
           </div>
 
           {/* If Bill is Split */}
@@ -286,9 +386,14 @@ function ExpenseForm(props) {
           <button
             type="submit"
             className="w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            // disabled={warning !== null}
+            onClick={checkEqual}
           >
             Submit
           </button>
+          {warning !== null && (
+            <p className="text-red-500">Total does not match</p>
+          )}
         </form>
       </div>
     </>

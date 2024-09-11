@@ -138,7 +138,7 @@ export const addExpenseService = async ({
 export const getExpenseService = async () => {
   try {
     const url = v1ApiRootUrl + "/expense";
-    const response = await axios.get(url);
+    const response = await axios.get(url, { withCredentials: true });
     if (response?.data?.success === true) return response.data?.data;
     return null;
   } catch (error) {
@@ -159,15 +159,19 @@ export const editExpenseService = async ({
 }) => {
   try {
     const url = v1ApiRootUrl + "expense/edit-expense";
-    const response = await axios.post(url, {
-      shares,
-      description,
-      type,
-      date,
-      amount,
-      groupId,
-      expenseId,
-    });
+    const response = await axios.post(
+      url,
+      {
+        shares,
+        description,
+        type,
+        date,
+        amount,
+        groupId,
+        expenseId,
+      },
+      { withCredentials: true }
+    );
     if (response?.data?.success === true) return response.data?.data;
     return null;
   } catch (error) {
@@ -180,7 +184,7 @@ export const editExpenseService = async ({
 export const getRecentExpenseService = async () => {
   try {
     const url = v1ApiRootUrl + "/expense/latest";
-    const response = await axios.get(url);
+    const response = await axios.get(url, { withCredentials: true });
     if (response?.data?.success === true) return response.data?.data;
     return null;
   } catch (error) {
@@ -195,7 +199,7 @@ export const getRecentExpenseService = async () => {
 export const getTotalDebtAmountExpenseService = async () => {
   try {
     const url = v1ApiRootUrl + "/expense/total-debt-amount";
-    const response = await axios.get(url);
+    const response = await axios.get(url, { withCredentials: true });
     if (response?.data?.success === true)
       return response.data?.data?.debtAmount;
     return null;
@@ -209,7 +213,7 @@ export const getTotalDebtAmountExpenseService = async () => {
 export const getTotalCreditAmountExpenseService = async () => {
   try {
     const url = v1ApiRootUrl + "/expense/total-credit-amount";
-    const response = await axios.get(url);
+    const response = await axios.get(url, { withCredentials: true });
     if (response?.data?.success === true)
       return response.data?.data?.creditAmount;
     return null;

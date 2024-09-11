@@ -109,6 +109,7 @@ export const getExpenses = asyncHandler(async (req, res) => {
         .status(400)
         .json(new ApiError(400, "No expneses with these Credentials"));
     }
+    // console.log(expenses);
 
     return res
       .status(200)

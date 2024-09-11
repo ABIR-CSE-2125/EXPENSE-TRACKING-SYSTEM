@@ -3,12 +3,14 @@ import { useSelector } from "react-redux";
 import { EXPENSE_TYPE_ENUM, v1ApiRootUrl } from "../constants";
 import { Input, Dropdown } from "./index";
 import { getFriendsService, getGroupsService } from "../Services/userServices";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const ALLFRIENDS = [];
 const splitModes = ["Select", "equal", "exact"];
 
 function ExpenseForm(props) {
+  const navigate = useNavigate();
   // Fetching the store data---------------------------------
   const stateUserData = useSelector((state) => state.auth.userData);
   // console.log("redux state", stateUserData);
@@ -241,20 +243,22 @@ function ExpenseForm(props) {
         }
       );
       console.log(response);
-      return;
+      navigate("/");
+    } else {
+      const response = await axios.post(
+        v1ApiRootUrl + "/expense/add-expense",
+        { ...payload },
+        {
+          params: {
+            withCredentials: true,
+            isSplit: splitStatus === true ? 1 : 0,
+            groupId: groupId,
+          },
+        }
+      );
+      navigate("/");
     }
-    const response = await axios.post(
-      v1ApiRootUrl + "/expense/add-expense",
-      { ...payload },
-      {
-        withCredentials: true,
-        params: {
-          isSplit: splitStatus === true ? 1 : 0,
-          groupId: groupId,
-        },
-      }
-    );
-    console.log(response);
+    ß;
   };
 
   return (

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { EXPENSE_TYPE_ENUM, v1ApiRootUrl } from "../constants";
 import { Input, Dropdown } from "./index";
-import { getFriendsService } from "../Services/userServices";
+import { getFriendsService, getGroupsService } from "../Services/userServices";
 import axios from "axios";
 
 const ALLFRIENDS = [];
@@ -18,7 +18,9 @@ function ExpenseForm(props) {
   const [totalAmount, SetTotalAmount] = useState(0);
   const [splitStatus, setSplitStatus] = useState(false);
   const [splitMode, setSplitMode] = useState("");
-  const [catagory, setCatagory] = useState("Home");
+  const [catagory, setCatagory] = useState("General");
+  const [groupId, setGroupId] = useState(null);
+  const [groups, setGroups] = useState([{}]);
   const [description, setDescription] = useState("");
   const [allUsers, setAllUsers] = useState([{}]);
   const [date, setDate] = useState(Date.now().toString());
@@ -38,8 +40,11 @@ function ExpenseForm(props) {
     users.forEach((user) => {
       ALLFRIENDS.push(user);
     });
-
     setAllUsers([...allUsers, ...users]);
+  };
+  const initGroupList = async () => {
+    const groupList = await getGroupsService();
+    setGroups([...groups, ...groupList]);
   };
 
   const handleIdSelect = (id) => {
@@ -130,11 +135,13 @@ function ExpenseForm(props) {
 
     console.log(e.target.value);
   };
-
   // Split or Not
   const onChangeSplitStatus = () => {
-    console.log("splitStatus");
-    // console.log(e.target.checked);
+    console.log("splitStatus", splitStatus);
+
+    if (splitStatus === false) {
+      initGroupList();
+    }
     setSplitStatus(!splitStatus);
   };
 
@@ -150,6 +157,11 @@ function ExpenseForm(props) {
     console.log("catagory");
     console.log(e.target.value);
     setCatagory(e.target.value);
+  };
+  const onChangeGroupId = (e) => {
+    console.log("Group Id");
+    console.log(e.target.value);
+    setGroupId(e.target.value);
   };
 
   // Date
@@ -197,7 +209,6 @@ function ExpenseForm(props) {
     console.log("catagory", catagory);
     console.log("date", typeof date, date);
     console.log("shares : ", shares);
-
     let payload = {
       description: description,
       type: catagory,
@@ -218,8 +229,7 @@ function ExpenseForm(props) {
     }
     JSON.stringify(payload);
     console.log(payload);
-    const group = null;
-    if (group === null) {
+    if (groupId === null) {
       const response = await axios.post(
         v1ApiRootUrl + "/expense/add-expense",
         { ...payload },
@@ -240,7 +250,7 @@ function ExpenseForm(props) {
         withCredentials: true,
         params: {
           isSplit: splitStatus === true ? 1 : 0,
-          group: group,
+          groupId: groupId,
         },
       }
     );
@@ -323,6 +333,23 @@ function ExpenseForm(props) {
                 />
               </div>
 
+              {/* Groups DropDown */}
+              <div className="flex flex-col">
+                <label className="text-lg font-medium text-gray-700 mb-1">
+                  Groups
+                </label>
+                <select
+                  className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onChange={(e) => onChangeGroupId(e)}
+                >
+                  {groups?.map((group) => (
+                    <option key={group._id} value={group._id}>
+                      {group?.groupName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Members Dropdown */}
               <div className="flex flex-col">
                 <label className="text-lg font-medium text-gray-700 mb-1">
@@ -339,7 +366,6 @@ function ExpenseForm(props) {
                   ))}
                 </select>
               </div>
-
               <div className="space-y-4">
                 {shares?.map(({ user, amount, paid }) => (
                   <div

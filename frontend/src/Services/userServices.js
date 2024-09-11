@@ -4,7 +4,11 @@ import { v1ApiRootUrl } from "../constants";
 export const addFriendsService = async ({ email }) => {
   try {
     const url = v1ApiRootUrl + "/user/add-friend";
-    const response = await axios.post(url, { email });
+    const response = await axios.post(
+      url,
+      { email },
+      { withCredentials: true }
+    );
     if (response?.data?.success === true) return response.data?.data;
     return null;
   } catch (error) {
@@ -32,7 +36,11 @@ export const getFriendsService = async () => {
 export const removeFriendsService = async ({ userName }) => {
   try {
     const url = v1ApiRootUrl + "/user/remove-friend";
-    const response = await axios.delete(url, { userName });
+    const response = await axios.delete(
+      url,
+      { userName },
+      { withCredentials: true }
+    );
     if (response?.data?.success === true) return response.data?.data;
     return null;
   } catch (error) {
@@ -62,6 +70,7 @@ export const addGroupsService = async ({
         image: image[0],
       },
       {
+        withCredentials: true,
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -76,7 +85,7 @@ export const addGroupsService = async ({
 export const getGroupsService = async () => {
   try {
     const url = v1ApiRootUrl + "/user/groups";
-    const response = await axios.get(url);
+    const response = await axios.get(url, { withCredentials: true });
     if (response?.data?.success === true) return response.data?.data;
     return null;
   } catch (error) {
@@ -86,7 +95,11 @@ export const getGroupsService = async () => {
 export const removeGroupsService = async ({ groupId }) => {
   try {
     const url = v1ApiRootUrl + "/user/remove-group";
-    const response = await axios.delete(url, { groupId });
+    const response = await axios.delete(
+      url,
+      { groupId },
+      { withCredentials: true }
+    );
     if (response?.data?.success === true) return response.data?.data;
     return null;
   } catch (error) {

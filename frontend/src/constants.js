@@ -1,6 +1,7 @@
 const hostURI = "http://localhost:3000";
 export const v1ApiRootUrl = hostURI + "/api/v1";
 export const EXPENSE_TYPE_ENUM = [
+  "General",
   "Games",
   "Movies",
   "Music",
@@ -28,7 +29,6 @@ export const EXPENSE_TYPE_ENUM = [
   "Praking",
   "Taxi",
   "Flight",
-  "General",
   "WIFI/Internet",
   "Water",
   "Electricty",

@@ -1,7 +1,13 @@
 import React, { useEffect } from "react";
 import { useState } from "react";
 import { getFriendsService, getGroupsService } from "../Services/userServices";
+import { set as setFriend, reset as resetFriend } from "../store/friendSlice";
+import { set as setGroup, reset as resetGroup } from "../store/groupSlice";
+import { getRecent as recent, offRecent } from "../store/authSlice";
+import { useDispatch } from "react-redux";
+
 function SideBar(props) {
+  const dispatch = useDispatch();
   const [friends, setFreinds] = useState([]);
   const [groups, setGroups] = useState([]);
 
@@ -10,6 +16,28 @@ function SideBar(props) {
     const groupList = await getGroupsService();
     setFreinds([...friendsList]);
     setGroups([...groupList]);
+  };
+
+  const setCommonDashboard = () => {
+    dispatch(resetFriend());
+    dispatch(resetGroup());
+    dispatch(offRecent());
+  };
+
+  const setFriendDashborad = (userData) => {
+    dispatch(setFriend(userData));
+    dispatch(resetGroup());
+    dispatch(offRecent());
+  };
+  const setGroupDashborad = (userData) => {
+    dispatch(resetFriend());
+    dispatch(setGroup(userData));
+    dispatch(offRecent());
+  };
+  const setRecentDashborad = (userData) => {
+    dispatch(resetFriend());
+    dispatch(resetGroup());
+    dispatch(recent());
   };
 
   useEffect(() => {
@@ -21,10 +49,16 @@ function SideBar(props) {
       <div className="mx-1">
         <div className="my-4 h-fit max-h-full w-full p-4">
           <ul className="space-y-2">
-            <li className="bg-gray-600 py-1 px-1 rounded text-white font-semibold hover:bg-gray-400 my-1 text-center">
+            <li
+              className="bg-gray-600 py-1 px-1 rounded text-white font-semibold hover:bg-gray-400 my-1 text-center"
+              onClick={() => setCommonDashboard()}
+            >
               Dashboard
             </li>
-            <li className="bg-gray-600 py-1 px-1 rounded text-white font-semibold hover:bg-gray-400 my-1 text-center">
+            <li
+              className="bg-gray-600 py-1 px-1 rounded text-white font-semibold hover:bg-gray-400 my-1 text-center"
+              onClick={() => setRecentDashborad()}
+            >
               Recent Activities
             </li>
           </ul>
@@ -46,6 +80,7 @@ function SideBar(props) {
                 <li
                   key={friend.id}
                   className="flex justify-between items-center bg-gray-400 px-4 py-2 rounded text-white hover:bg-white hover:text-black"
+                  onClick={() => setFriendDashborad(friend)}
                 >
                   <div>{friend.firstName}</div>
                   <button
@@ -75,6 +110,7 @@ function SideBar(props) {
                 <li
                   key={group.id}
                   className="flex justify-between items-center bg-gray-400 px-4 py-2 rounded text-white  hover:bg-white hover:text-black"
+                  onClick={() => setGroupDashborad(group)}
                 >
                   <div>{group.groupName}</div>
                   <button

@@ -10,7 +10,7 @@ const splitModes = ["Select", "equal", "exact"];
 
 function ExpenseForm(props) {
   // Fetching the store data---------------------------------
-  const stateUserData = useSelector((state) => state.userData);
+  const stateUserData = useSelector((state) => state.auth.userData);
   // console.log("redux state", stateUserData);
   const paidBy = stateUserData;
 

@@ -4,8 +4,14 @@ import { Container } from "../../components";
 import { Link } from "react-router-dom";
 
 function HomePage(props) {
-  const UserData = useSelector((state) => state.userData);
-  console.log("IN home check : ", UserData);
+  const USER = useSelector((state) => state.auth);
+  const USERDATA = USER.userData;
+  const RECENT = USER.recent;
+  const FRIENDDATA = useSelector((state) => state.friend.friendData);
+  const GROUPDATA = useSelector((state) => state.group.groupData);
+  console.log("IN home check user : ", USERDATA, RECENT);
+  console.log("IN home check friend : ", FRIENDDATA);
+  console.log("IN home check group : ", GROUPDATA);
 
   return (
     <>

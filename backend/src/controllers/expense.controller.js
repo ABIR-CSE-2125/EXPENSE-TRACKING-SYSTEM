@@ -91,17 +91,30 @@ export const getExpenses = asyncHandler(async (req, res) => {
     const userId = req.user?._id;
     let expenses;
     if (friend_id) {
-      const friend = new mongoose.Types.ObjectId(friend_id + "");
-      expenses = await Expense.find({
-        $or: [{ paidBy: friend }, { "splitInfo.member": friend }], // Include expenses where user is payer or in splitInfo
-      }).sort({ updatedAt: -1 });
+      const { debtEntries, totalDebt, credEntries, totalCredit } =
+        await friendWiseExpenses(friend_id, userId);
+      // console.log("debts : ", debtEntries);
+      // console.log("creds : ", credEntries);
+      // console.log(data);
+
+      expenses = [...debtEntries, ...credEntries];
     } else if (group_id) {
       const group = new mongoose.Types.ObjectId(group_id + "");
-      expenses = await Expense.find({ group }).sort({ updatedAt: -1 });
+      expenses = await Expense.find({ group })
+        .sort({ updatedAt: -1 })
+        .populate([
+          { path: "paidBy", select: "_id firstName" },
+          { path: "splitInfo.member", select: "_id firstName" },
+        ]);
     } else {
       expenses = await Expense.find({
         $or: [{ paidBy: userId }, { "splitInfo.member": userId }], // Include expenses where user is payer or in splitInfo
-      }).sort({ updatedAt: -1 });
+      })
+        .sort({ updatedAt: -1 })
+        .populate([
+          { path: "paidBy", select: "_id firstName" },
+          { path: "splitInfo.member", select: "_id firstName" },
+        ]);
     }
 
     if (!expenses || expenses.length === 0) {
@@ -110,7 +123,6 @@ export const getExpenses = asyncHandler(async (req, res) => {
         .json(new ApiError(400, "No expneses with these Credentials"));
     }
     // console.log(expenses);
-
     return res
       .status(200)
       .json(
@@ -300,3 +312,63 @@ export const getLatestEpenses = asyncHandler(async (req, res) => {
     });
   }
 });
+
+const friendWiseExpenses = async (friendId, userId) => {
+  try {
+    const friend = new mongoose.Types.ObjectId(friendId + "");
+    const user = new mongoose.Types.ObjectId(userId + "");
+    const relevantEntries = await Debt.find({
+      $or: [
+        {
+          $and: [{ debtor: friend }, { creditor: user }],
+        },
+        {
+          $and: [{ debtor: user }, { creditor: friend }],
+        },
+      ],
+    }).populate("splitId");
+    if (!relevantEntries || relevantEntries.length === 0) {
+      return {
+        debtEntries: [],
+        totalDebt: 0,
+        credEntries: [],
+        totalCredit: 0,
+      };
+    }
+    console.log("rek", relevantEntries);
+
+    const debtEntries = relevantEntries.filter((i) =>
+      i.creditor.equals(friend)
+    );
+    const credEntries = relevantEntries.filter((i) => i.creditor.equals(user));
+    const totalDebt = debtEntries.reduce((acc, i) => acc + i.amount, 0);
+    const totalCredit = credEntries.reduce((acc, i) => acc + i.amount, 0);
+    // console.log("debts : ", debtEntries);
+    // console.log("creds : ", credEntries);
+    // console.log("td : ", totalDebt);
+    // console.log("tc : ", totalCredit);
+    if (!credEntries) {
+      console.log("2");
+      return null;
+    }
+
+    if (!debtEntries) {
+      console.log("1");
+      return null;
+    }
+    console.log("hi");
+    return {
+      debtEntries,
+      totalDebt,
+      credEntries,
+      totalCredit,
+    };
+  } catch (error) {
+    return {
+      debtEntries: [],
+      totalDebt: 0,
+      credEntries: [],
+      totalCredit: 0,
+    };
+  }
+};

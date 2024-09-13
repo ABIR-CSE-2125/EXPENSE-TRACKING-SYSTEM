@@ -5,7 +5,7 @@ import { set as setFriend, reset as resetFriend } from "../store/friendSlice";
 import { set as setGroup, reset as resetGroup } from "../store/groupSlice";
 import { getRecent as recent, offRecent } from "../store/authSlice";
 import { useDispatch } from "react-redux";
-
+import { Link } from "react-router-dom";
 function SideBar(props) {
   const dispatch = useDispatch();
   const [friends, setFreinds] = useState([]);
@@ -49,18 +49,22 @@ function SideBar(props) {
       <div className="mx-1">
         <div className="my-4 h-fit max-h-full w-full p-4">
           <ul className="space-y-2">
-            <li
-              className="bg-gray-600 py-1 px-1 rounded text-white font-semibold hover:bg-gray-400 my-1 text-center"
-              onClick={() => setCommonDashboard()}
-            >
-              Dashboard
-            </li>
-            <li
-              className="bg-gray-600 py-1 px-1 rounded text-white font-semibold hover:bg-gray-400 my-1 text-center"
-              onClick={() => setRecentDashborad()}
-            >
-              Recent Activities
-            </li>
+            <Link to="/">
+              <li
+                className="bg-gray-600 py-1 px-1 rounded text-white font-semibold hover:bg-gray-400 my-1 text-center"
+                onClick={() => setCommonDashboard()}
+              >
+                Dashboard
+              </li>
+            </Link>
+            <Link to="/">
+              <li
+                className="bg-gray-600 py-1 px-1 rounded text-white font-semibold hover:bg-gray-400 my-1 text-center"
+                onClick={() => setRecentDashborad()}
+              >
+                Recent Activities
+              </li>
+            </Link>
           </ul>
         </div>
 
@@ -82,7 +86,9 @@ function SideBar(props) {
                   className="flex justify-between items-center bg-gray-400 px-4 py-2 rounded text-white hover:bg-white hover:text-black"
                   onClick={() => setFriendDashborad(friend)}
                 >
-                  <div>{friend.firstName}</div>
+                  <Link to="/">
+                    <div>{friend.firstName}</div>
+                  </Link>
                   <button
                     type="submit"
                     className="bg-gray-500 px-2 py-1 rounded hover:bg-rose-700 text-white"
@@ -112,7 +118,9 @@ function SideBar(props) {
                   className="flex justify-between items-center bg-gray-400 px-4 py-2 rounded text-white  hover:bg-white hover:text-black"
                   onClick={() => setGroupDashborad(group)}
                 >
-                  <div>{group.groupName}</div>
+                  <Link to="/">
+                    <div>{group.groupName}</div>
+                  </Link>
                   <button
                     type="submit"
                     className="bg-gray-500 px-2 py-1 rounded hover:bg-rose-700 text-white"

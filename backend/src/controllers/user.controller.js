@@ -10,9 +10,9 @@ import { deleteFromCloudinary } from "../utils/deleteFile.util.js";
 import { Group } from "../models/group.model.js";
 import mongoose from "mongoose";
 const options = {
-  httpOnly: true,
+  httpOnly: false,
   sameSite: "None",
-  secure: true,
+  secure: false,
 };
 // Authentication APIs
 const generateAccessAndRefereshTokens = async (userId) => {

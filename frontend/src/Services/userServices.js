@@ -135,10 +135,16 @@ export const addExpenseService = async ({
     );
   }
 };
-export const getExpenseService = async () => {
+export const getExpenseService = async (friend_id, group_id) => {
   try {
     const url = v1ApiRootUrl + "/expense";
-    const response = await axios.get(url, { withCredentials: true });
+    const response = await axios.get(url, {
+      withCredentials: true,
+      params: {
+        friend_id,
+        group_id,
+      },
+    });
     if (response?.data?.success === true) return response.data?.data;
     return null;
   } catch (error) {

@@ -1,6 +1,6 @@
-import Group from "./Group";
+import GroupCard from "./GroupCard";
 import Footer from "./Footer";
-import Friend from "./Friend";
+import FriendCard from "./FriendCard";
 import Header from "./Header";
 import SideBar from "./SideBar";
 import Button from "./Button";
@@ -13,11 +13,12 @@ import Logo from "./Logo";
 import Dropdown from "./Dropdown";
 import Input from "./Input";
 import ExpenseForm from "./ExpenseForm";
+// import Expe
 export {
   Footer,
   Header,
-  Friend,
-  Group,
+  FriendCard,
+  GroupCard,
   SideBar,
   Button,
   Container,

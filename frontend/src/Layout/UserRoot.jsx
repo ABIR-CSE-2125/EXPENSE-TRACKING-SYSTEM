@@ -13,7 +13,7 @@ function UserRoot(props) {
           <Outlet />
         </div>
       </div>
-      <Footer />
+      {/* <Footer /> */}
     </>
   );
 }

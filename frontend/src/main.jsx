@@ -2,13 +2,22 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { ExpenseForm, Friend, Group, Login, SignUp } from "./components";
+import {
+  ExpenseForm,
+  FriendCard,
+  GroupCard,
+  FriendForm,
+  GroupForm,
+  Login,
+  SignUp,
+} from "./components";
 import { PersistGate } from "redux-persist/integration/react";
 import HomePage from "./pages/Dashboard/HomePage";
 import UserRoot from "./Layout/UserRoot";
 import AuthRoot from "./Layout/AuthRoot";
 import { Provider } from "react-redux";
 import { store, persistor } from "./store/store";
+import ExpenseCard from "./components/ExpenseCard";
 const routes = [
   {
     path: "/",
@@ -20,12 +29,13 @@ const routes = [
       },
       {
         path: "friend/:friend-id",
-        element: <Friend />,
+        element: <FriendCard />,
       },
       {
         path: "group/:group-id",
-        element: <Group />,
+        element: <GroupCard />,
       },
+      {},
     ],
   },
   {
@@ -44,11 +54,15 @@ const routes = [
   },
   {
     path: "/expense",
-    element: <AuthRoot />,
+    element: <UserRoot />,
     children: [
       {
         path: "add",
         element: <ExpenseForm />,
+      },
+      {
+        path: ":expense_id",
+        element: <ExpenseCard />,
       },
     ],
   },

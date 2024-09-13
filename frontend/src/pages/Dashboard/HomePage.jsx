@@ -50,15 +50,6 @@ function HomePage(props) {
       (item) => item.paidBy?._id !== USERDATA._id && item.isSplit === true
     );
     console.log(toPayExp);
-    console.log("friends data : ---> ", FRIENDDATA);
-    if (FRIENDDATA) {
-      toPayExp = toPayExp.filter(
-        (item) =>
-          item.paidBy?._id === FRIENDDATA?._id &&
-          item.splitInfo.some((o) => o?._id === USERDATA?._id)
-      );
-    }
-    console.log(toPayExp);
 
     setPayExpenses([...toPayExp]);
   };
@@ -84,6 +75,9 @@ function HomePage(props) {
     navigate("/expense/add");
   };
 
+  const openExpense = (expense) => {
+    navigate(`/expense/${expense?._id}`);
+  };
   useEffect(() => {
     fetchTotalDebit();
     fetchTotalCredit();
@@ -103,36 +97,37 @@ function HomePage(props) {
             Add Expense
           </button>
         </div>
+        {!FRIENDDATA && !GROUPDATA && (
+          <div className="grid grid-cols-3 gap-4 mb-4 border-b-2 border-gray-400 pb-4 text-center">
+            <div className="border-r-2 border-gray-300">
+              <p className="text-sm text-gray-500">Total Balance</p>
+              {totalCredit - totalDebt >= 0 && (
+                <p className="text-lg font-semibold text-green-500">
+                  {(totalCredit - totalDebt).toFixed(2)}
+                </p>
+              )}
+              {totalCredit - totalDebt < 0 && (
+                <p className="text-lg font-semibold text-red-500">
+                  {-(totalCredit - totalDebt).toFixed(2)}
+                </p>
+              )}
+            </div>
 
-        <div className="grid grid-cols-3 gap-4 mb-4 border-b-2 border-gray-400 pb-4 text-center">
-          <div className="border-r-2 border-gray-300">
-            <p className="text-sm text-gray-500">Total Balance</p>
-            {totalCredit - totalDebt >= 0 && (
-              <p className="text-lg font-semibold text-green-500">
-                {(totalCredit - totalDebt).toFixed(2)}
-              </p>
-            )}
-            {totalCredit - totalDebt < 0 && (
+            <div className="border-r-2 border-gray-300">
+              <p className="text-sm text-gray-500">You Owe</p>
               <p className="text-lg font-semibold text-red-500">
-                {-(totalCredit - totalDebt).toFixed(2)}
+                {totalDebt.toFixed(2)}
               </p>
-            )}
-          </div>
+            </div>
 
-          <div className="border-r-2 border-gray-300">
-            <p className="text-sm text-gray-500">You Owe</p>
-            <p className="text-lg font-semibold text-red-500">
-              {totalDebt.toFixed(2)}
-            </p>
+            <div>
+              <p className="text-sm text-gray-500">You Lent</p>
+              <p className="text-lg font-semibold text-green-500">
+                {totalCredit.toFixed(2)}
+              </p>
+            </div>
           </div>
-
-          <div>
-            <p className="text-sm text-gray-500">You Are Owed</p>
-            <p className="text-lg font-semibold text-green-500">
-              {totalCredit.toFixed(2)}
-            </p>
-          </div>
-        </div>
+        )}
 
         <div className="grid grid-cols-2 gap-4 text-center text-gray-500">
           <div className="border-r-2 border-gray-300">
@@ -144,16 +139,16 @@ function HomePage(props) {
                     className="rounded-lg bg-slate-100 px-6 py-4 shadow-md hover:bg-slate-200 transition-all duration-300 ease-in-out transform hover:-translate-y-1 hover:shadow-lg"
                     key={expense._id}
                   >
-                    <div className="flex flex-col space-y-1">
+                    <div
+                      className="flex flex-col space-y-1"
+                      onClick={() => openExpense(expense)}
+                    >
                       <p className="text-sm font-semibold text-gray-700">
                         {expense?.description === " "
                           ? "No Description"
                           : expense?.description}
                       </p>
-                      <p className="text-sm text-gray-500">
-                        {expense?.paidBy.firstName}
-                      </p>
-                      <p className="text-md font-medium text-gray-800">
+                      <p className="text-md font-medium text-gray-500">
                         {calculateDebt(expense)}
                       </p>
                     </div>
@@ -163,19 +158,22 @@ function HomePage(props) {
           </div>
 
           <div>
-            <p className="text-lg font-semibold">You Are Owed</p>
+            <p className="text-lg font-semibold">You lent</p>
             <ul className="mt-2 space-y-2 px-4 py-2 max-h-96 overflow-y-auto">
               {paidExpenses &&
                 paidExpenses.map((expense) => (
                   <li className="rounded-lg bg-slate-100 px-6 py-4 shadow-md hover:bg-slate-200 transition-all duration-300 ease-in-out transform hover:-translate-y-1 hover:shadow-lg">
-                    <div className="flex flex-col space-y-1">
+                    <div
+                      className="flex flex-col space-y-1"
+                      onClick={() => openExpense(expense)}
+                    >
                       <p className="text-md font-bold text-gray-800">
                         {expense?.description.trim() === ""
                           ? "No Description"
                           : expense?.description}
                       </p>
-                      <p className="text-sm text-gray-500">
-                        Amount : ${calculateCredit(expense)}
+                      <p className="text-md font-medium text-gray-500">
+                        {calculateCredit(expense)}
                       </p>
                     </div>
                   </li>

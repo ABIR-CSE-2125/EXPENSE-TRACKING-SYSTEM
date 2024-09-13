@@ -1,23 +1,24 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { EXPENSE_TYPE_ENUM, v1ApiRootUrl } from "../constants";
-import { Input, Dropdown } from "./index";
+import { useNavigate, useParams } from "react-router-dom";
 import { getFriendsService, getGroupsService } from "../Services/userServices";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { Input, Dropdown } from "./";
+import moment from "moment";
 
 const ALLFRIENDS = [];
 const splitModes = ["Select", "equal", "exact"];
 
-function ExpenseForm(props) {
+function ExpenseCard() {
+  const { expense_id } = useParams();
   const navigate = useNavigate();
-  // Fetching the store data---------------------------------
-  const stateUserData = useSelector((state) => state.auth.userData);
-  // console.log("redux state", stateUserData);
-  const paidBy = stateUserData;
 
-  // States------------------------------------------------------------------
-  const [totalAmount, SetTotalAmount] = useState(0);
+  // Fetching the store data---------------------------------
+  const userData = useSelector((state) => state.auth.userData);
+  // console.log("redux state", stateUserData);
+  // States---------
+  const [totalAmount, setTotalAmount] = useState(0);
   const [splitStatus, setSplitStatus] = useState(false);
   const [splitMode, setSplitMode] = useState("");
   const [catagory, setCatagory] = useState("General");
@@ -28,93 +29,54 @@ function ExpenseForm(props) {
   const [date, setDate] = useState(Date.now().toString());
   const [hasMounted, setHasMounted] = useState(false);
   const [warning, setWarning] = useState(null);
-  const [shares, setShares] = useState([
-    {
-      user: paidBy,
-      amount: totalAmount,
-      paid: true,
-    },
-  ]);
-
-  const initList = async () => {
-    const users = await getFriendsService();
-    // console.log("from service : ", users);
-    users.forEach((user) => {
-      ALLFRIENDS.push(user);
-    });
-    setAllUsers([...allUsers, ...users]);
-  };
-  const initGroupList = async () => {
-    const groupList = await getGroupsService();
-    setGroups([...groups, ...groupList]);
-  };
-
-  const handleIdSelect = (id) => {
-    const user = ALLFRIENDS.find((obj) => obj._id === id);
-    console.log("From handle id select : ", user);
-
-    setAllUsers(allUsers.filter((prevUser) => prevUser._id !== user._id));
-
-    setShares((prevSahres) => {
-      const sortedShares = [
-        ...prevSahres,
-        { user, amount: 0, paid: false },
-      ].sort((a, b) => a.user.firstName.localeCompare(b.user.firstName));
-      return sortedShares;
-    });
-  };
-
-  const handleIdRemove = (user) => {
-    // setSelectedIds(selectedIds.filter((selectedId) => selectedId !== id));
-    setAllUsers([...allUsers, user]);
-    setShares(shares.filter((share) => share.user._id !== user._id));
-  };
-
-  const handleAmountChange = (user, amount, paid) => {
-    const updatedShares = shares.filter((share) => share.user._id !== user._id);
-    // let total =
-    //   updatedShares.reduce((acc, share) => acc + share.amount, 0) + newAmount;
-    updatedShares.push({ user, amount, paid });
-    updatedShares.sort((a, b) =>
-      a.user.firstName.localeCompare(b.user.firstName)
-    );
-    setShares([...updatedShares]);
-  };
-
-  const paidStatusChange = (user, amount, paid) => {
-    const updatedShares = shares.filter((share) => share.user._id !== user._id);
-    updatedShares.push({ user, amount, paid: !paid });
-    updatedShares.sort((a, b) =>
-      a.user.firstName.localeCompare(b.user.firstName)
-    );
-    setShares([...updatedShares]);
-  };
-
-  const splitEqual = () => {
-    const numberOfMembers = shares.length;
-    const shareAmount = totalAmount / numberOfMembers;
-    if (shares.length === 0) return;
-    const newShares = shares.map((share) => ({
-      ...share,
-      amount: shareAmount,
-    }));
-    setShares(newShares);
-  };
-
-  // ----------------------------------------------------------------------------------------------------------
+  const [editStatus, setEditStatus] = useState(false);
+  const [shares, setShares] = useState([]);
+  const [paidBy, setPaidBy] = useState({});
+  //-----------------------------------------------initiate-----------------------------------------------------
   useEffect(() => {
     const initialize = async () => {
-      await initList();
+      // initialising the states for reading
       setHasMounted(true);
+      setEditStatus(false);
+      const response = await axios.get(v1ApiRootUrl + `/expense`, {
+        withCredentials: true,
+        params: {
+          expense_id,
+        },
+      });
+      const expense = response?.data?.data;
+      console.log(expense);
+
+      if (expense) {
+        setSplitStatus(expense.isSplit);
+        setTotalAmount(expense.amount);
+        setDescription(expense.description);
+        setCatagory(expense.type);
+        setDate(expense.date);
+        setGroupId(expense.group);
+        setPaidBy(expense.paidBy);
+        if (expense.splitInfo.length > 0) {
+          const currentMembers = expense.splitInfo.map((obj) => obj.member);
+          setAllUsers(currentMembers);
+          const oldShares = expense.splitInfo.map((obj) => ({
+            user: obj.member,
+            amount: obj.splitAmount,
+            paid: obj.paid,
+          }));
+          setShares([...oldShares]);
+        }
+      } else {
+        console.log("Error in Prop passing : view Expense");
+      }
     };
     if (!hasMounted) initialize();
   }, [hasMounted]);
+  //--------------------------------------- handle share state change--------------------------------------------------
 
   useEffect(() => {
     if (splitMode === "equal") splitEqual();
   }, [shares.length, splitMode]);
-  // Input handlers--------------------------------------------------------------------------------------------------------
-
+  //  //--------------------------------------- handler methods--------------------------------------------------
   // Total Amount
   const onChangeTotalAmount = (e) => {
     console.log("totalAmount");
@@ -133,7 +95,7 @@ function ExpenseForm(props) {
     });
     // console.log(shares);
 
-    SetTotalAmount(updatedAmount);
+    setTotalAmount(updatedAmount);
 
     console.log(e.target.value);
   };
@@ -142,6 +104,7 @@ function ExpenseForm(props) {
     console.log("splitStatus", splitStatus);
 
     if (splitStatus === false) {
+      initList();
       initGroupList();
     }
     setSplitStatus(!splitStatus);
@@ -176,9 +139,7 @@ function ExpenseForm(props) {
     console.log("Description");
     setDescription(e.target.value);
   };
-
-  // Submit Function
-
+  //----------------------------------------------------Submission----------------------------------------------------------
   const checkEqual = () => {
     let totalByShares = 0;
     shares.forEach((share) => {
@@ -259,7 +220,81 @@ function ExpenseForm(props) {
       navigate("/");
     }
   };
+  //-------------------------------------Utilites-----------------------------------------------------
+  const initList = async () => {
+    const users = await getFriendsService();
+    // console.log("from service : ", users);
+    users.forEach((user) => {
+      ALLFRIENDS.push(user);
+    });
+    setAllUsers([...allUsers, ...users]);
+  };
+  const initGroupList = async () => {
+    const groupList = await getGroupsService();
+    setGroups([...groups, ...groupList]);
+  };
 
+  const handleIdSelect = (id) => {
+    const user = ALLFRIENDS.find((obj) => obj._id === id);
+    console.log("From handle id select : ", user);
+
+    setAllUsers(allUsers.filter((prevUser) => prevUser._id !== user._id));
+
+    setShares((prevSahres) => {
+      const sortedShares = [
+        ...prevSahres,
+        { user, amount: 0, paid: false },
+      ].sort((a, b) => a.user.firstName.localeCompare(b.user.firstName));
+      return sortedShares;
+    });
+  };
+
+  const handleIdRemove = (user) => {
+    // setSelectedIds(selectedIds.filter((selectedId) => selectedId !== id));
+    setAllUsers([...allUsers, user]);
+    setShares(shares.filter((share) => share.user._id !== user._id));
+  };
+
+  const handleAmountChange = (user, amount, paid) => {
+    const updatedShares = shares.filter((share) => share.user._id !== user._id);
+    // let total =
+    //   updatedShares.reduce((acc, share) => acc + share.amount, 0) + newAmount;
+    updatedShares.push({ user, amount, paid });
+    updatedShares.sort((a, b) =>
+      a.user.firstName.localeCompare(b.user.firstName)
+    );
+    setShares([...updatedShares]);
+  };
+
+  const paidStatusChange = (user, amount, paid) => {
+    const updatedShares = shares.filter((share) => share.user._id !== user._id);
+    updatedShares.push({ user, amount, paid: !paid });
+    updatedShares.sort((a, b) =>
+      a.user.firstName.localeCompare(b.user.firstName)
+    );
+    setShares([...updatedShares]);
+  };
+
+  const splitEqual = () => {
+    const numberOfMembers = shares.length;
+    const shareAmount = totalAmount / numberOfMembers;
+    if (shares.length === 0) return;
+    const newShares = shares.map((share) => ({
+      ...share,
+      amount: shareAmount,
+    }));
+    setShares(newShares);
+  };
+  const formatDate = (date) => {
+    // console.log(date);
+
+    const dd = date.slice(0, 2);
+    const mm = date.slice(3, 5);
+    const yyyy = date.slice(6, 10);
+    // console.log(yyyy + "-" + mm + "-" + dd);
+
+    return yyyy + "-" + mm + "-" + dd;
+  };
   return (
     <>
       <div className="m-4 p-6 max-w-lg border-2 border-gray-300 bg-gray-100 rounded-lg shadow-lg min-w-fit">
@@ -273,6 +308,8 @@ function ExpenseForm(props) {
               placeholder="Description"
               className="p-3 rounded-md border-2 border-gray-300 bg-white focus:outline-none focus:border-blue-500"
               eventHandler={onDescriptionChange}
+              value={description}
+              readOnly={!editStatus}
             />
           </div>
           {/* Total Amount Input */}
@@ -284,6 +321,8 @@ function ExpenseForm(props) {
               placeholder="Enter total amount"
               className="p-3 rounded-md border-2 border-gray-300 bg-white focus:outline-none focus:border-blue-500"
               eventHandler={onChangeTotalAmount}
+              value={totalAmount}
+              readOnly={!editStatus}
             />
           </div>
 
@@ -296,6 +335,8 @@ function ExpenseForm(props) {
               type="date"
               className="p-3 rounded-md border-2 border-gray-300 bg-white focus:outline-none focus:border-blue-500"
               eventHandler={onChangeDate}
+              value={formatDate(date)}
+              readOnly={!editStatus}
             />
           </div>
 
@@ -308,6 +349,8 @@ function ExpenseForm(props) {
               options={EXPENSE_TYPE_ENUM}
               className="p-3 rounded-md border-2 border-gray-300 bg-white"
               eventHandler={onChangeCatagory}
+              value={catagory}
+              disabled={!editStatus}
             />
           </div>
 
@@ -318,6 +361,7 @@ function ExpenseForm(props) {
               checked={splitStatus}
               className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               onChange={onChangeSplitStatus}
+              disabled={!editStatus}
               label="Split?"
             />
           </div>
@@ -333,6 +377,8 @@ function ExpenseForm(props) {
                   options={splitModes}
                   className="p-3 rounded-md border-2 border-gray-300 bg-white"
                   eventHandler={onChangeSplitMode}
+                  value={splitMode}
+                  disabled={!editStatus}
                 />
               </div>
 
@@ -344,6 +390,8 @@ function ExpenseForm(props) {
                 <select
                   className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   onChange={(e) => onChangeGroupId(e)}
+                  value={groupId}
+                  disabled={!editStatus}
                 >
                   {groups?.map((group) => (
                     <option key={group._id} value={group._id}>
@@ -361,6 +409,7 @@ function ExpenseForm(props) {
                 <select
                   className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   onChange={(e) => handleIdSelect(e.target.value)}
+                  disabled={!editStatus}
                 >
                   {allUsers?.map((user) => (
                     <option key={user._id} value={user._id}>
@@ -384,7 +433,7 @@ function ExpenseForm(props) {
                     <input
                       type="number"
                       value={amount}
-                      readOnly={splitMode === "equal"}
+                      readOnly={splitMode === "equal" || !editStatus}
                       onChange={(e) =>
                         handleAmountChange(user, parseInt(e.target.value), paid)
                       }
@@ -393,15 +442,16 @@ function ExpenseForm(props) {
                     <input
                       type="checkbox"
                       checked={paid}
-                      disabled={user?._id === paidBy?._id}
                       className="p-2 border rounded-md bg-gray-100"
                       onChange={() => paidStatusChange(user, amount, paid)}
+                      readOnly={!editStatus}
                     />
                     {user._id !== paidBy._id && (
                       <button
                         type="button"
                         onClick={() => handleIdRemove(user)}
                         className="text-red-500 hover:text-red-700"
+                        disabled={!editStatus}
                       >
                         <b>-</b>
                       </button>
@@ -415,8 +465,14 @@ function ExpenseForm(props) {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`w-full py-3 px-4 ${
+              !editStatus
+                ? "bg-gray-400"
+                : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
+            } text-white font-semibold rounded-md  focus:outline-none focus:ring-2 `}
             // disabled={warning !== null}
+
+            disabled={!editStatus}
             onClick={checkEqual}
           >
             Submit
@@ -430,4 +486,4 @@ function ExpenseForm(props) {
   );
 }
 
-export default ExpenseForm;
+export default ExpenseCard;

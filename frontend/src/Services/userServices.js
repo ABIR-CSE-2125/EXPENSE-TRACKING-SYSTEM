@@ -135,7 +135,7 @@ export const addExpenseService = async ({
     );
   }
 };
-export const getExpenseService = async (friend_id, group_id) => {
+export const getExpenseService = async (friend_id, group_id, expense_id) => {
   try {
     const url = v1ApiRootUrl + "/expense";
     const response = await axios.get(url, {
@@ -143,6 +143,7 @@ export const getExpenseService = async (friend_id, group_id) => {
       params: {
         friend_id,
         group_id,
+        expense_id,
       },
     });
     if (response?.data?.success === true) return response.data?.data;

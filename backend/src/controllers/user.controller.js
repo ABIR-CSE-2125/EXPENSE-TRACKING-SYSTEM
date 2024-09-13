@@ -10,9 +10,9 @@ import { deleteFromCloudinary } from "../utils/deleteFile.util.js";
 import { Group } from "../models/group.model.js";
 import mongoose from "mongoose";
 const options = {
-  httpOnly: false,
+  httpOnly: true,
   sameSite: "None",
-  secure: false,
+  secure: true,
 };
 // Authentication APIs
 const generateAccessAndRefereshTokens = async (userId) => {
@@ -515,7 +515,9 @@ export const createGroups = asyncHandler(async (req, res) => {
 export const getGroups = asyncHandler(async (req, res) => {
   try {
     // const groupIds = req.user.groups;
-    const groupList = await Group.find({ creator: req.user?._id });
+    const groupList = await Group.find({ creator: req.user?._id }).populate(
+      "members"
+    );
 
     return res
       .status(200)

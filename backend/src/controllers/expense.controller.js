@@ -87,7 +87,7 @@ export const addExpense = asyncHandler(async (req, res) => {
 });
 export const getExpenses = asyncHandler(async (req, res) => {
   try {
-    const { friend_id, group_id } = req.query;
+    const { friend_id, group_id, expense_id } = req.query;
     const userId = req.user?._id;
     let expenses;
     if (friend_id) {
@@ -96,16 +96,22 @@ export const getExpenses = asyncHandler(async (req, res) => {
       // console.log("debts : ", debtEntries);
       // console.log("creds : ", credEntries);
       // console.log(data);
-
-      expenses = [...debtEntries, ...credEntries];
+      const s1 = debtEntries.map((i) => i.splitId);
+      const s2 = credEntries.map((i) => i.splitId);
+      expenses = [...s1, ...s2];
     } else if (group_id) {
       const group = new mongoose.Types.ObjectId(group_id + "");
-      expenses = await Expense.find({ group })
+      expenses = await Expense.find({ group: group_id })
         .sort({ updatedAt: -1 })
         .populate([
           { path: "paidBy", select: "_id firstName" },
           { path: "splitInfo.member", select: "_id firstName" },
         ]);
+    } else if (expense_id) {
+      expenses = await Expense.findById(expense_id).populate([
+        { path: "paidBy", select: "_id firstName" },
+        { path: "splitInfo.member", select: "_id firstName" },
+      ]);
     } else {
       expenses = await Expense.find({
         $or: [{ paidBy: userId }, { "splitInfo.member": userId }], // Include expenses where user is payer or in splitInfo
@@ -326,7 +332,13 @@ const friendWiseExpenses = async (friendId, userId) => {
           $and: [{ debtor: user }, { creditor: friend }],
         },
       ],
-    }).populate("splitId");
+    }).populate({
+      path: "splitId",
+      populate: [
+        { path: "paidBy", select: "_id firstName" }, // Populate splitId.paidBy
+        { path: "splitInfo.member", select: "_id firstName" }, // Populate splitId.splitInfo.member
+      ],
+    });
     if (!relevantEntries || relevantEntries.length === 0) {
       return {
         debtEntries: [],

@@ -1,18 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { EXPENSE_TYPE_ENUM, v1ApiRootUrl } from "../constants";
 import { Input, Dropdown } from "./index";
 import { getFriendsService, getGroupsService } from "../Services/userServices";
 import { useNavigate } from "react-router-dom";
+import { nanoid } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const ALLFRIENDS = [];
+let ALLFRIENDS = [];
 const splitModes = ["Select", "equal", "exact"];
-
 function ExpenseForm(props) {
   const navigate = useNavigate();
   // Fetching the store data---------------------------------
   const stateUserData = useSelector((state) => state.auth.userData);
+  const FRIENDDATA = useSelector((state) => state.friend.friendData);
+  const GROUPDATA = useSelector((state) => state.group.groupData);
   // console.log("redux state", stateUserData);
   const paidBy = stateUserData;
 
@@ -22,9 +24,19 @@ function ExpenseForm(props) {
   const [splitMode, setSplitMode] = useState("");
   const [catagory, setCatagory] = useState("General");
   const [groupId, setGroupId] = useState(null);
-  const [groups, setGroups] = useState([{}]);
+  const [groups, setGroups] = useState([
+    {
+      _id: nanoid(),
+      groupName: "Select",
+    },
+  ]);
   const [description, setDescription] = useState("");
-  const [allUsers, setAllUsers] = useState([{}]);
+  const [allUsers, setAllUsers] = useState([
+    {
+      _id: nanoid(),
+      firstName: "Select",
+    },
+  ]);
   const [date, setDate] = useState(Date.now().toString());
   const [hasMounted, setHasMounted] = useState(false);
   const [warning, setWarning] = useState(null);
@@ -36,30 +48,17 @@ function ExpenseForm(props) {
     },
   ]);
 
-  const initList = async () => {
-    const users = await getFriendsService();
-    // console.log("from service : ", users);
-    users.forEach((user) => {
-      ALLFRIENDS.push(user);
-    });
-    setAllUsers([...allUsers, ...users]);
-  };
-  const initGroupList = async () => {
-    const groupList = await getGroupsService();
-    setGroups([...groups, ...groupList]);
-  };
-
   const handleIdSelect = (id) => {
     const user = ALLFRIENDS.find((obj) => obj._id === id);
-    console.log("From handle id select : ", user);
+    console.log("From handle id select : ", ALLFRIENDS);
+    console.log("Selcted Id : ", id);
 
-    setAllUsers(allUsers.filter((prevUser) => prevUser._id !== user._id));
-
+    setAllUsers(allUsers.filter((prevUser) => prevUser?._id !== user?._id));
     setShares((prevSahres) => {
       const sortedShares = [
         ...prevSahres,
         { user, amount: 0, paid: false },
-      ].sort((a, b) => a.user.firstName.localeCompare(b.user.firstName));
+      ].sort((a, b) => a?.user?.firstName.localeCompare(b?.user?.firstName));
       return sortedShares;
     });
   };
@@ -67,11 +66,13 @@ function ExpenseForm(props) {
   const handleIdRemove = (user) => {
     // setSelectedIds(selectedIds.filter((selectedId) => selectedId !== id));
     setAllUsers([...allUsers, user]);
-    setShares(shares.filter((share) => share.user._id !== user._id));
+    setShares(shares.filter((share) => share.user?._id !== user?._id));
   };
 
   const handleAmountChange = (user, amount, paid) => {
-    const updatedShares = shares.filter((share) => share.user._id !== user._id);
+    const updatedShares = shares.filter(
+      (share) => share.user?._id !== user?._id
+    );
     // let total =
     //   updatedShares.reduce((acc, share) => acc + share.amount, 0) + newAmount;
     updatedShares.push({ user, amount, paid });
@@ -82,7 +83,9 @@ function ExpenseForm(props) {
   };
 
   const paidStatusChange = (user, amount, paid) => {
-    const updatedShares = shares.filter((share) => share.user._id !== user._id);
+    const updatedShares = shares.filter(
+      (share) => share?.user?._id !== user?._id
+    );
     updatedShares.push({ user, amount, paid: !paid });
     updatedShares.sort((a, b) =>
       a.user.firstName.localeCompare(b.user.firstName)
@@ -100,19 +103,78 @@ function ExpenseForm(props) {
     }));
     setShares(newShares);
   };
+  // ----------------------------------------------------------------------------------------------------------
+  const initList = useCallback(async () => {
+    const users = await getFriendsService();
+    console.log("from service : ", users);
+    users.forEach((user) => {
+      ALLFRIENDS.push(user);
+    });
+    setAllUsers([...allUsers, ...users]);
+  }, []);
+  // const initGroupList = useCallback(async () => {
+  //   const groupList = await getGroupsService();
+  //   setGroups([...groups, ...groupList]);
+  // }, [splitStatus]);
+  const initGroupList = async () => {
+    const groupList = await getGroupsService();
+    setGroups([...groups, ...groupList]);
+  };
+  // Conditional init------------------------------------------------------------------------------------------
+  // With Friends----------------------------------------------------------------------------------------------
+  const initWithFriend = useCallback(async () => {
+    setSplitStatus(true);
+    setSplitMode("equal");
+    await initList();
+    handleIdSelect(FRIENDDATA?._id);
+    setAllUsers([{}]);
+    console.log(shares);
+  }, []);
+  // with group
+  const initwithGroup = useCallback(async () => {
+    setSplitMode("equal");
+    setSplitStatus(true);
+    await initList();
+    const users = GROUPDATA.members
+      .filter((data) => data?._id !== paidBy?._id)
+      .map((data) => ({
+        _id: data._id,
+        firstName: data.firstName,
+      }));
+    ALLFRIENDS.length = 0;
+    console.log("After clearing ", ALLFRIENDS);
+    ALLFRIENDS = users;
+    setAllUsers([{}]);
+    console.log(ALLFRIENDS);
 
+    for (const user of users) {
+      setShares((prevSahres) => {
+        const sortedShares = [
+          ...prevSahres,
+          { user, amount: 0, paid: false },
+        ].sort((a, b) => a.user.firstName.localeCompare(b.user.firstName));
+        return sortedShares;
+      });
+    }
+  }, []);
   // ----------------------------------------------------------------------------------------------------------
   useEffect(() => {
-    const initialize = async () => {
-      await initList();
+    if (hasMounted === false) {
+      if (FRIENDDATA) {
+        initWithFriend();
+      } else if (GROUPDATA) {
+        initwithGroup();
+      } else {
+        initList();
+      }
       setHasMounted(true);
-    };
-    if (!hasMounted) initialize();
-  }, [hasMounted]);
+    }
+    // initWithFriend();
+  }, []);
 
   useEffect(() => {
     if (splitMode === "equal") splitEqual();
-  }, [shares.length, splitMode]);
+  }, [shares.length, splitMode, totalAmount]);
   // Input handlers--------------------------------------------------------------------------------------------------------
 
   // Total Amount
@@ -259,6 +321,9 @@ function ExpenseForm(props) {
       navigate("/");
     }
   };
+  const onCancel = () => {
+    navigate("/");
+  };
 
   return (
     <>
@@ -333,6 +398,7 @@ function ExpenseForm(props) {
                   options={splitModes}
                   className="p-3 rounded-md border-2 border-gray-300 bg-white"
                   eventHandler={onChangeSplitMode}
+                  value={(FRIENDDATA || GROUPDATA) && splitMode}
                 />
               </div>
 
@@ -346,8 +412,8 @@ function ExpenseForm(props) {
                   onChange={(e) => onChangeGroupId(e)}
                 >
                   {groups?.map((group) => (
-                    <option key={group._id} value={group._id}>
-                      {group?.groupName}
+                    <option key={group._id || nanoid()} value={group._id}>
+                      {group.groupName}
                     </option>
                   ))}
                 </select>
@@ -372,13 +438,13 @@ function ExpenseForm(props) {
               <div className="space-y-4">
                 {shares?.map(({ user, amount, paid }) => (
                   <div
-                    key={user._id}
+                    key={user?._id}
                     className="flex items-center space-x-4 border p-4 rounded-md bg-white shadow-sm"
                   >
                     <input
                       type="text"
                       readOnly
-                      value={user.firstName}
+                      value={user?.firstName}
                       className="p-2 border rounded-md bg-gray-100"
                     />
                     <input
@@ -393,11 +459,11 @@ function ExpenseForm(props) {
                     <input
                       type="checkbox"
                       checked={paid}
-                      disabled={user?._id === paidBy?._id}
                       className="p-2 border rounded-md bg-gray-100"
+                      disabled={user?._id === paidBy?._id}
                       onChange={() => paidStatusChange(user, amount, paid)}
                     />
-                    {user._id !== paidBy._id && (
+                    {user._id !== paidBy._id && !FRIENDDATA && (
                       <button
                         type="button"
                         onClick={() => handleIdRemove(user)}
@@ -412,17 +478,31 @@ function ExpenseForm(props) {
             </div>
           )}
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            className="w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            // disabled={warning !== null}
-            onClick={checkEqual}
-          >
-            Submit
-          </button>
+          <div className="flex space-x-4">
+            {/* Cancel Button */}
+            <button
+              type="button"
+              className="flex-1 py-3 px-4 bg-rose-700 hover:bg-rose-800 text-white font-semibold rounded-md focus:outline-none focus:ring-2 focus:ring-rose-500 transition duration-300 ease-in-out"
+              onClick={onCancel}
+            >
+              Cancel
+            </button>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              className={`flex-1 py-3 px-4 bg-emerald-700 hover:bg-emerald-800 focus:ring-emerald-500 text-white font-semibold rounded-md focus:outline-none focus:ring-2 transition duration-300 ease-in-out`}
+              onClick={checkEqual}
+            >
+              Submit
+            </button>
+          </div>
+
+          {/* Warning Message */}
           {warning !== null && (
-            <p className="text-red-500">Total does not match</p>
+            <p className="text-red-500 text-sm font-semibold mt-2 text-center">
+              Total does not match
+            </p>
           )}
         </form>
       </div>

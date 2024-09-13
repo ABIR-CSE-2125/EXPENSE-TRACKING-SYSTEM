@@ -61,7 +61,7 @@ const routes = [
         element: <ExpenseForm />,
       },
       {
-        path: ":expense_id",
+        path: "",
         element: <ExpenseCard />,
       },
     ],
@@ -69,11 +69,9 @@ const routes = [
 ];
 const router = createBrowserRouter(routes, { basename: "/app" });
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <Provider store={store}>
-      <PersistGate loading={null} persistor={persistor}>
-        <RouterProvider router={router} />
-      </PersistGate>
-    </Provider>
-  </React.StrictMode>
+  <Provider store={store}>
+    <PersistGate loading={null} persistor={persistor}>
+      <RouterProvider router={router} />
+    </PersistGate>
+  </Provider>
 );

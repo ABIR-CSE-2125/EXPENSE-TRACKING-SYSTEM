@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import { useState } from "react";
 import { getFriendsService, getGroupsService } from "../Services/userServices";
 import { set as setFriend, reset as resetFriend } from "../store/friendSlice";
@@ -11,12 +11,12 @@ function SideBar(props) {
   const [friends, setFreinds] = useState([]);
   const [groups, setGroups] = useState([]);
 
-  const init = async () => {
+  const init = useCallback(async () => {
     const friendsList = await getFriendsService();
     const groupList = await getGroupsService();
     setFreinds([...friendsList]);
     setGroups([...groupList]);
-  };
+  }, []);
 
   const setCommonDashboard = () => {
     dispatch(resetFriend());
@@ -34,7 +34,7 @@ function SideBar(props) {
     dispatch(setGroup(userData));
     dispatch(offRecent());
   };
-  const setRecentDashborad = (userData) => {
+  const setRecentDashborad = () => {
     dispatch(resetFriend());
     dispatch(resetGroup());
     dispatch(recent());

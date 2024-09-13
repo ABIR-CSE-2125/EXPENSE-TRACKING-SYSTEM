@@ -2,14 +2,16 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { EXPENSE_TYPE_ENUM, v1ApiRootUrl } from "../constants";
 import { useNavigate, useParams } from "react-router-dom";
-import { getFriendsService, getGroupsService } from "../Services/userServices";
+import {
+  editExpenseService,
+  getFriendsService,
+  getGroupsService,
+} from "../Services/userServices";
 import axios from "axios";
 import { Input, Dropdown } from "./";
-import moment from "moment";
 
 const ALLFRIENDS = [];
 const splitModes = ["Select", "equal", "exact"];
-
 function ExpenseCard() {
   const { expense_id } = useParams();
   const navigate = useNavigate();
@@ -64,13 +66,19 @@ function ExpenseCard() {
             paid: obj.paid,
           }));
           setShares([...oldShares]);
+          const equals = [
+            ...new Set(expense.splitInfo.map((o) => o.splitAmount)),
+          ];
+          console.log(equals);
+          if (equals.length !== 1) setSplitMode("exact");
+          else setSplitMode("equal");
         }
       } else {
         console.log("Error in Prop passing : view Expense");
       }
     };
     if (!hasMounted) initialize();
-  }, [hasMounted]);
+  }, []);
   //--------------------------------------- handle share state change--------------------------------------------------
 
   useEffect(() => {
@@ -172,11 +180,13 @@ function ExpenseCard() {
     console.log("catagory", catagory);
     console.log("date", typeof date, date);
     console.log("shares : ", shares);
+    console.log("group id : ", groupId);
     let payload = {
       description: description,
       type: catagory,
       amount: totalAmount,
       date: date,
+      expenseId: expense_id,
     };
     if (splitStatus === true) {
       const splitInfo = shares.map((share) => ({
@@ -188,37 +198,15 @@ function ExpenseCard() {
       payload = {
         ...payload,
         shares: splitInfo,
+        groupId,
       };
     }
     JSON.stringify(payload);
     console.log(payload);
-    if (groupId === null) {
-      const response = await axios.post(
-        v1ApiRootUrl + "/expense/add-expense",
-        { ...payload },
-        {
-          withCredentials: true,
-          params: {
-            isSplit: splitStatus === true ? "1" : "0",
-          },
-        }
-      );
-      console.log(response);
-      navigate("/");
-    } else {
-      const response = await axios.post(
-        v1ApiRootUrl + "/expense/add-expense",
-        { ...payload },
-        {
-          params: {
-            withCredentials: true,
-            isSplit: splitStatus === true ? 1 : 0,
-            groupId: groupId,
-          },
-        }
-      );
-      navigate("/");
-    }
+
+    const response = await editExpenseService({ ...payload });
+    console.log(response);
+    navigate("/");
   };
   //-------------------------------------Utilites-----------------------------------------------------
   const initList = async () => {
@@ -287,17 +275,36 @@ function ExpenseCard() {
   };
   const formatDate = (date) => {
     // console.log(date);
-
-    const dd = date.slice(0, 2);
-    const mm = date.slice(3, 5);
-    const yyyy = date.slice(6, 10);
+    const yyyy = date.slice(0, 4);
+    const mm = date.slice(5, 7);
+    const dd = date.slice(8, 10);
     // console.log(yyyy + "-" + mm + "-" + dd);
-
-    return yyyy + "-" + mm + "-" + dd;
+    const formattedDate = `${yyyy}-${mm}-${dd}`;
+    return formattedDate;
   };
+
+  const onCancel = () => {
+    navigate("/");
+  };
+
   return (
     <>
       <div className="m-4 p-6 max-w-lg border-2 border-gray-300 bg-gray-100 rounded-lg shadow-lg min-w-fit">
+        <div className="flex justify-end">
+          <button
+            type="button"
+            className={`${
+              userData?._id === paidBy?._id
+                ? "bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition duration-300 ease-in-out"
+                : "bg-gray-400 text-black font-semibold py-2 px-4 rounded-lg"
+            }`}
+            disabled={userData?._id !== paidBy?._id}
+            onClick={() => setEditStatus(true)}
+          >
+            Edit
+          </button>
+        </div>
+
         <form className="space-y-6" onSubmit={handleSubmit}>
           {/* Desciption */}
           <div className="flex flex-col">
@@ -444,7 +451,7 @@ function ExpenseCard() {
                       checked={paid}
                       className="p-2 border rounded-md bg-gray-100"
                       onChange={() => paidStatusChange(user, amount, paid)}
-                      readOnly={!editStatus}
+                      disabled={!editStatus && user?._id === paidBy?._id}
                     />
                     {user._id !== paidBy._id && (
                       <button
@@ -461,24 +468,36 @@ function ExpenseCard() {
               </div>
             </div>
           )}
+          <div className="flex space-x-4">
+            {/* Cancel Button */}
+            <button
+              type="button"
+              className="flex-1 py-3 px-4 bg-rose-700 hover:bg-rose-800 text-white font-semibold rounded-md focus:outline-none focus:ring-2 focus:ring-rose-500 transition duration-300 ease-in-out"
+              onClick={onCancel}
+            >
+              Cancel
+            </button>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            className={`w-full py-3 px-4 ${
-              !editStatus
-                ? "bg-gray-400"
-                : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
-            } text-white font-semibold rounded-md  focus:outline-none focus:ring-2 `}
-            // disabled={warning !== null}
+            {/* Submit Button */}
+            <button
+              type="submit"
+              className={`flex-1 py-3 px-4 ${
+                !editStatus
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-emerald-700 hover:bg-emerald-800 focus:ring-blue-500"
+              } text-white font-semibold rounded-md focus:outline-none focus:ring-2 transition duration-300 ease-in-out`}
+              disabled={!editStatus}
+              onClick={checkEqual}
+            >
+              Submit
+            </button>
+          </div>
 
-            disabled={!editStatus}
-            onClick={checkEqual}
-          >
-            Submit
-          </button>
+          {/* Warning Message */}
           {warning !== null && (
-            <p className="text-red-500">Total does not match</p>
+            <p className="text-red-500 text-sm font-semibold mt-2 text-center">
+              Total does not match
+            </p>
           )}
         </form>
       </div>

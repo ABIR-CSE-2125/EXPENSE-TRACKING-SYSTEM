@@ -165,8 +165,8 @@ export const editExpenseService = async ({
   expenseId,
 }) => {
   try {
-    const url = v1ApiRootUrl + "expense/edit-expense";
-    const response = await axios.post(
+    const url = v1ApiRootUrl + "/expense/edit-expense";
+    const response = await axios.patch(
       url,
       {
         shares,

@@ -3,10 +3,10 @@ import { useSelector } from "react-redux";
 function Header() {
   const state = useSelector((state) => state.auth);
   const userData = state.userData;
-  console.log("--------------------------------------------------");
-  console.log("Header");
+  // console.log("--------------------------------------------------");
+  // console.log("Header");
 
-  console.log(userData);
+  // console.log(userData);
 
   return (
     <div>

@@ -58,7 +58,9 @@ function ExpenseCard() {
         setGroupId(expense.group);
         setPaidBy(expense.paidBy);
         if (expense.splitInfo.length > 0) {
-          const currentMembers = expense.splitInfo.map((obj) => obj.member);
+          const currentMembers = expense.splitInfo
+            .filter((data) => data?.member?._id !== userData?._id)
+            .map((obj) => obj.member);
           setAllUsers(currentMembers);
           const oldShares = expense.splitInfo.map((obj) => ({
             user: obj.member,
@@ -275,9 +277,9 @@ function ExpenseCard() {
   };
   const formatDate = (date) => {
     // console.log(date);
-    const yyyy = date.slice(0, 4);
-    const mm = date.slice(5, 7);
-    const dd = date.slice(8, 10);
+    const yyyy = date?.slice(0, 4);
+    const mm = date?.slice(5, 7);
+    const dd = date?.slice(8, 10);
     // console.log(yyyy + "-" + mm + "-" + dd);
     const formattedDate = `${yyyy}-${mm}-${dd}`;
     return formattedDate;

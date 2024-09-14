@@ -515,9 +515,9 @@ export const createGroups = asyncHandler(async (req, res) => {
 export const getGroups = asyncHandler(async (req, res) => {
   try {
     // const groupIds = req.user.groups;
-    const groupList = await Group.find({ creator: req.user?._id }).populate(
-      "members"
-    );
+    const groupList = await Group.find({
+      $or: [{ creator: req.user?._id }, { members: req.user?._id }],
+    }).populate("members");
 
     return res
       .status(200)

@@ -61,7 +61,7 @@ const routes = [
         element: <ExpenseForm />,
       },
       {
-        path: "",
+        path: ":expense_id",
         element: <ExpenseCard />,
       },
     ],

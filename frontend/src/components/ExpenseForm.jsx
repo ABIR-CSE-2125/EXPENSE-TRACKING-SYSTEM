@@ -2,7 +2,11 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { EXPENSE_TYPE_ENUM, v1ApiRootUrl } from "../constants";
 import { Input, Dropdown } from "./index";
-import { getFriendsService, getGroupsService } from "../Services/userServices";
+import {
+  addExpenseService,
+  getFriendsService,
+  getGroupsService,
+} from "../Services/userServices";
 import { useNavigate } from "react-router-dom";
 import { nanoid } from "@reduxjs/toolkit";
 import axios from "axios";
@@ -21,7 +25,7 @@ function ExpenseForm(props) {
   // States------------------------------------------------------------------
   const [totalAmount, SetTotalAmount] = useState(0);
   const [splitStatus, setSplitStatus] = useState(false);
-  const [splitMode, setSplitMode] = useState("");
+  const [splitMode, setSplitMode] = useState("Select");
   const [catagory, setCatagory] = useState("General");
   const [groupId, setGroupId] = useState(null);
   const [groups, setGroups] = useState([
@@ -47,7 +51,7 @@ function ExpenseForm(props) {
       paid: true,
     },
   ]);
-
+  // --------------------------------------------------------Utilities------------------------------------------------------------------------------------
   const handleIdSelect = (id) => {
     const user = ALLFRIENDS.find((obj) => obj._id === id);
     console.log("From handle id select : ", ALLFRIENDS);
@@ -82,17 +86,6 @@ function ExpenseForm(props) {
     setShares([...updatedShares]);
   };
 
-  const paidStatusChange = (user, amount, paid) => {
-    const updatedShares = shares.filter(
-      (share) => share?.user?._id !== user?._id
-    );
-    updatedShares.push({ user, amount, paid: !paid });
-    updatedShares.sort((a, b) =>
-      a.user.firstName.localeCompare(b.user.firstName)
-    );
-    setShares([...updatedShares]);
-  };
-
   const splitEqual = () => {
     const numberOfMembers = shares.length;
     const shareAmount = totalAmount / numberOfMembers;
@@ -118,6 +111,7 @@ function ExpenseForm(props) {
   // }, [splitStatus]);
   const initGroupList = async () => {
     const groupList = await getGroupsService();
+    console.log("From groupList : ", groupList);
     setGroups([...groups, ...groupList]);
   };
   // Conditional init------------------------------------------------------------------------------------------
@@ -126,6 +120,7 @@ function ExpenseForm(props) {
     setSplitStatus(true);
     setSplitMode("equal");
     await initList();
+    await initGroupList();
     handleIdSelect(FRIENDDATA?._id);
     setAllUsers([{}]);
     console.log(shares);
@@ -175,8 +170,7 @@ function ExpenseForm(props) {
   useEffect(() => {
     if (splitMode === "equal") splitEqual();
   }, [shares.length, splitMode, totalAmount]);
-  // Input handlers--------------------------------------------------------------------------------------------------------
-
+  // ------------------------------------Handlers----------------------------------------
   // Total Amount
   const onChangeTotalAmount = (e) => {
     console.log("totalAmount");
@@ -239,7 +233,17 @@ function ExpenseForm(props) {
     setDescription(e.target.value);
   };
 
-  // Submit Function
+  const paidStatusChange = (user, amount, paid) => {
+    const updatedShares = shares.filter(
+      (share) => share?.user?._id !== user?._id
+    );
+    updatedShares.push({ user, amount, paid: !paid });
+    updatedShares.sort((a, b) =>
+      a.user.firstName.localeCompare(b.user.firstName)
+    );
+    setShares([...updatedShares]);
+  };
+  // --------------------------------------------Submission--------------------------------------------
 
   const checkEqual = () => {
     let totalByShares = 0;
@@ -247,14 +251,30 @@ function ExpenseForm(props) {
       totalByShares += share.amount;
     });
     if (totalAmount != totalByShares) {
-      console.log(typeof totalByShares, totalByShares);
-      console.log(typeof totalAmount, totalAmount);
+      // console.log(typeof totalByShares, totalByShares);
+      // console.log(typeof totalAmount, totalAmount);
       console.log("Launching Total Amount Not Match Warning");
       setWarning(
         "Total Amoount of shares does not match the total amount paid"
       );
     } else {
       setWarning(null);
+    }
+    return warning === null;
+  };
+  const checkUsersInGroup = (groupId) => {
+    if (!groupId) return true;
+    const group = groups.filter((g) => g._id === groupId);
+    console.log("check group members", group);
+    for (const share of shares) {
+      const exists = group?.members.filter(
+        (obj) => obj?._id === share?.user?._id
+      );
+      if (!exists)
+        setWarning(
+          "Total Amoount of shares does not match the total amount paid"
+        );
+      else setWarning(null);
     }
     return warning === null;
   };
@@ -273,11 +293,14 @@ function ExpenseForm(props) {
     console.log("catagory", catagory);
     console.log("date", typeof date, date);
     console.log("shares : ", shares);
+
     let payload = {
       description: description,
       type: catagory,
       amount: totalAmount,
       date: date,
+      groupId: groupId || GROUPDATA?._id,
+      isSplit: splitStatus === true ? "1" : "0",
     };
     if (splitStatus === true) {
       const splitInfo = shares.map((share) => ({
@@ -285,43 +308,25 @@ function ExpenseForm(props) {
         amount: share.amount,
         paid: share.paid,
       }));
-      JSON.stringify(splitInfo);
       payload = {
         ...payload,
-        shares: splitInfo,
+        shares: [...splitInfo],
       };
     }
+    JSON.stringify(splitInfo);
     JSON.stringify(payload);
     console.log(payload);
-    if (groupId === null) {
-      const response = await axios.post(
-        v1ApiRootUrl + "/expense/add-expense",
-        { ...payload },
-        {
-          withCredentials: true,
-          params: {
-            isSplit: splitStatus === true ? "1" : "0",
-          },
-        }
-      );
-      console.log(response);
-      navigate("/");
-    } else {
-      const response = await axios.post(
-        v1ApiRootUrl + "/expense/add-expense",
-        { ...payload },
-        {
-          params: {
-            withCredentials: true,
-            isSplit: splitStatus === true ? 1 : 0,
-            groupId: groupId,
-          },
-        }
-      );
-      navigate("/");
+    if (checkUsersInGroup(payload?.groupId)) {
+      console.log("Users Not Present in Group");
+      return;
     }
+    const response = await addExpenseService({ ...payload });
+    console.log(response);
+    navigate("/");
   };
   const onCancel = () => {
+    console.log("After sub : ", allUsers);
+    console.log("After sub : ", groups);
     navigate("/");
   };
 
@@ -410,6 +415,7 @@ function ExpenseForm(props) {
                 <select
                   className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   onChange={(e) => onChangeGroupId(e)}
+                  disabled={GROUPDATA}
                 >
                   {groups?.map((group) => (
                     <option key={group._id || nanoid()} value={group._id}>
@@ -427,6 +433,7 @@ function ExpenseForm(props) {
                 <select
                   className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   onChange={(e) => handleIdSelect(e.target.value)}
+                  disabled={FRIENDDATA || GROUPDATA}
                 >
                   {allUsers?.map((user) => (
                     <option key={user._id} value={user._id}>
@@ -463,7 +470,7 @@ function ExpenseForm(props) {
                       disabled={user?._id === paidBy?._id}
                       onChange={() => paidStatusChange(user, amount, paid)}
                     />
-                    {user._id !== paidBy._id && !FRIENDDATA && (
+                    {user._id !== paidBy._id && !FRIENDDATA && !GROUPDATA && (
                       <button
                         type="button"
                         onClick={() => handleIdRemove(user)}

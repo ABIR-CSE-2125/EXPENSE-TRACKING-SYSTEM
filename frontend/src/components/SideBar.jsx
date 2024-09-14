@@ -6,6 +6,7 @@ import { set as setGroup, reset as resetGroup } from "../store/groupSlice";
 import { getRecent as recent, offRecent } from "../store/authSlice";
 import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
+import { nanoid } from "@reduxjs/toolkit";
 function SideBar(props) {
   const dispatch = useDispatch();
   const [friends, setFreinds] = useState([]);
@@ -82,7 +83,7 @@ function SideBar(props) {
             {friends.length > 0 &&
               friends.map((friend) => (
                 <li
-                  key={friend.id}
+                  key={nanoid()}
                   className="flex justify-between items-center bg-gray-400 px-4 py-2 rounded text-white hover:bg-white hover:text-black"
                   onClick={() => setFriendDashborad(friend)}
                 >
@@ -114,7 +115,7 @@ function SideBar(props) {
             {groups.length > 0 &&
               groups.map((group) => (
                 <li
-                  key={group.id}
+                  key={nanoid()}
                   className="flex justify-between items-center bg-gray-400 px-4 py-2 rounded text-white  hover:bg-white hover:text-black"
                   onClick={() => setGroupDashborad(group)}
                 >

@@ -116,16 +116,28 @@ export const addExpenseService = async ({
   type,
   date,
   amount,
+  groupId,
+  isSplit,
 }) => {
   try {
     const url = v1ApiRootUrl + "/expense/add-expense";
-    const response = await axios.post(url, {
-      shares,
-      description,
-      type,
-      date,
-      amount,
-    });
+    const response = await axios.post(
+      url,
+      {
+        shares,
+        description,
+        type,
+        date,
+        amount,
+      },
+      {
+        withCredentials: true,
+        params: {
+          isSplit,
+          groupId,
+        },
+      }
+    );
     if (response?.data?.success === true) return response.data?.data;
     return null;
   } catch (error) {

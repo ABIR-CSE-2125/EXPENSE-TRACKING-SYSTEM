@@ -7,6 +7,7 @@ import {
   getTotalCreditAmountExpenseService,
   getTotalDebtAmountExpenseService,
 } from "../../Services/userServices";
+import { nanoid } from "@reduxjs/toolkit";
 
 function HomePage(props) {
   const navigate = useNavigate();
@@ -21,9 +22,9 @@ function HomePage(props) {
   const RECENT = USER.recent;
   const FRIENDDATA = useSelector((state) => state.friend.friendData);
   const GROUPDATA = useSelector((state) => state.group.groupData);
-  console.log("IN home check user : ", USERDATA, RECENT);
-  console.log("IN home check friend : ", FRIENDDATA);
-  console.log("IN home check group : ", GROUPDATA);
+  // console.log("IN home check user : ", USERDATA, RECENT);
+  // console.log("IN home check friend : ", FRIENDDATA);
+  // console.log("IN home check group : ", GROUPDATA);
   const fetchTotalDebit = useCallback(async () => {
     let data = await getTotalDebtAmountExpenseService();
     // console.log("debt", data);
@@ -41,7 +42,7 @@ function HomePage(props) {
     const friend_id = FRIENDDATA?._id;
     const group_id = GROUPDATA?._id;
     const data = await getExpenseService(friend_id, group_id);
-    console.log("expenses \n", data);
+    // console.log("expenses \n", data);
     if (!data) {
       setPaidExpenses([]);
       setPayExpenses([]);
@@ -77,13 +78,13 @@ function HomePage(props) {
     return p;
   };
 
-  const toExpenseForm = useCallback(() => {
+  const toExpenseForm = () => {
     navigate("/expense/add");
-  }, [FRIENDDATA, USERDATA, GROUPDATA]);
+  };
 
-  const openExpense = useCallback((expense) => {
+  const openExpense = (expense) => {
     navigate(`/expense/${expense?._id}`);
-  }, []);
+  };
   useEffect(() => {
     fetchTotalDebit();
     fetchTotalCredit();
@@ -155,7 +156,7 @@ function HomePage(props) {
                 payExpenses.map((expense) => (
                   <li
                     className="rounded-lg bg-slate-100 px-6 py-4 shadow-md hover:bg-slate-200 transition-all duration-300 ease-in-out transform hover:-translate-y-1 hover:shadow-lg"
-                    key={expense._id}
+                    key={nanoid()}
                   >
                     <div
                       className="flex flex-col space-y-1"
@@ -180,7 +181,10 @@ function HomePage(props) {
             <ul className="mt-2 space-y-2 px-4 py-2 max-h-96 overflow-y-auto">
               {paidExpenses &&
                 paidExpenses.map((expense) => (
-                  <li className="rounded-lg bg-slate-100 px-6 py-4 shadow-md hover:bg-slate-200 transition-all duration-300 ease-in-out transform hover:-translate-y-1 hover:shadow-lg">
+                  <li
+                    className="rounded-lg bg-slate-100 px-6 py-4 shadow-md hover:bg-slate-200 transition-all duration-300 ease-in-out transform hover:-translate-y-1 hover:shadow-lg"
+                    key={nanoid()}
+                  >
                     <div
                       className="flex flex-col space-y-1"
                       onClick={() => openExpense(expense)}

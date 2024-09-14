@@ -1,5 +1,6 @@
 import { Schema, model } from "mongoose";
 import { GROUP_TYPE_ENUM } from "../config.js";
+import { Expense } from "./expense.model.js";
 const groupSchema = new Schema(
   {
     groupName: {
@@ -37,5 +38,25 @@ const groupSchema = new Schema(
     index: { name: 1, creator: 1 },
   },
   { timestamps: true }
+);
+groupSchema.pre(
+  "deleteOne",
+  { document: true, query: false },
+  async function (next) {
+    try {
+      // Delete all debts related to this group
+      const expenses = await Expense.find({ group: this._id });
+      for (const element of expenses) {
+        await Debt.deleteMany({ splitId: element?._id });
+      }
+      await Expense.deleteMany({ group: this._id });
+
+      // Delete all expenses related to this group
+
+      next();
+    } catch (error) {
+      next(error); // Pass errors to the next middleware or handler
+    }
+  }
 );
 export const Group = model("Group", groupSchema);

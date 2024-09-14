@@ -18,6 +18,7 @@ import AuthRoot from "./Layout/AuthRoot";
 import { Provider } from "react-redux";
 import { store, persistor } from "./store/store";
 import ExpenseCard from "./components/ExpenseCard";
+import ConfirmRemove from "./components/ConfirmRemove";
 const routes = [
   {
     path: "/",
@@ -32,8 +33,24 @@ const routes = [
         element: <FriendCard />,
       },
       {
+        path: "friend/add",
+        element: <FriendForm />,
+      },
+      {
+        path: "friend/remove/:id",
+        element: <ConfirmRemove entity="Friend" />,
+      },
+      {
         path: "group/:group-id",
         element: <GroupCard />,
+      },
+      {
+        path: "group/add",
+        element: <GroupForm />,
+      },
+      {
+        path: "group/remove/:id",
+        element: <ConfirmRemove entity="Group" />,
       },
       {},
     ],

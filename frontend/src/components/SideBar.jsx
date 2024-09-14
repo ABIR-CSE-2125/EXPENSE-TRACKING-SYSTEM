@@ -1,6 +1,10 @@
 import React, { useCallback, useEffect } from "react";
 import { useState } from "react";
-import { getFriendsService, getGroupsService } from "../Services/userServices";
+import {
+  getFriendsService,
+  getGroupsService,
+  removeFriendsService,
+} from "../Services/userServices";
 import { set as setFriend, reset as resetFriend } from "../store/friendSlice";
 import { set as setGroup, reset as resetGroup } from "../store/groupSlice";
 import { getRecent as recent, offRecent } from "../store/authSlice";
@@ -45,6 +49,10 @@ function SideBar(props) {
     init();
   }, []);
 
+  const removeFriend = async (friendId) => {
+    const response = await removeFriendsService({ friendId });
+  };
+
   return (
     <>
       <div className="mx-1">
@@ -73,10 +81,10 @@ function SideBar(props) {
           <div className="flex justify-between items-center mb-4">
             <p className="text-xl font-bold text-black ml-1">Friends</p>
             <button
-              type="submit"
+              type="button"
               className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-emerald-600"
             >
-              +
+              <Link to="/friend/add">+</Link>
             </button>
           </div>
           <ul className="space-y-2">
@@ -91,10 +99,10 @@ function SideBar(props) {
                     <div>{friend.firstName}</div>
                   </Link>
                   <button
-                    type="submit"
+                    type="button"
                     className="bg-gray-500 px-2 py-1 rounded hover:bg-rose-700 text-white"
                   >
-                    -
+                    <Link to={`/friend/remove/${friend?._id}`}>-</Link>
                   </button>
                 </li>
               ))}
@@ -105,7 +113,7 @@ function SideBar(props) {
           <div className="flex justify-between items-center mb-4">
             <p className="text-xl font-bold text-black ml-1">Groups</p>
             <button
-              type="submit"
+              type="button"
               className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-emerald-600"
             >
               +
@@ -123,10 +131,10 @@ function SideBar(props) {
                     <div>{group.groupName}</div>
                   </Link>
                   <button
-                    type="submit"
+                    type="button"
                     className="bg-gray-500 px-2 py-1 rounded hover:bg-rose-700 text-white"
                   >
-                    -
+                    <Link to={`/group/remove/${group?._id}`}>-</Link>
                   </button>
                 </li>
               ))}

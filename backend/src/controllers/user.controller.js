@@ -412,17 +412,22 @@ export const getFriends = asyncHandler(async (req, res) => {
 export const deleteFriend = asyncHandler(async (req, res) => {
   //   Reconfirmation of deletion will be handled from frontend
   try {
-    const { userId } = req.body;
-    if (!userId) {
+    const { friendId } = req.params;
+    if (!friendId) {
       return res.status(400).json(new ApiError(400, "User ID Required"));
     }
     const user = req.user;
     const currentFriends = user?.friends;
-    if (currentFriendsIds.length === 0) {
+    console.log("current  : ", currentFriends);
+    console.log("friend in controllrer  : ", friendId);
+    const toDeleteId = new mongoose.Types.ObjectId(friendId + "");
+    console.log(toDeleteId);
+
+    if (currentFriends.length === 0) {
       return res.status(400).json(new ApiError(400, "No Friends"));
     }
     const updatedFriends = currentFriends.filter(
-      (friend) => friend?._id !== userId
+      (friend) => !friend.equals(toDeleteId)
     );
 
     if (updatedFriends.length === currentFriends.length) {
@@ -529,9 +534,11 @@ export const getGroups = asyncHandler(async (req, res) => {
     });
   }
 });
+
+// Logic has to be chaged
 export const deleteGroup = asyncHandler(async (req, res) => {
   try {
-    const { groupId } = req.body;
+    const { groupId } = req.params;
     if (!groupId) {
       return res.status(400).json(new ApiError(400, "Group ID Required"));
     }
@@ -545,6 +552,57 @@ export const deleteGroup = asyncHandler(async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       apiError: new ApiError(500, "Issue in Group Deletion"),
+      message: error.message,
+    });
+  }
+});
+
+export const removeUserFromGroup = asyncHandler(async (req, res) => {
+  try {
+    const user = req?.user;
+    const { groupId } = req.params;
+    if (!groupId) {
+      return res.status(400).json(new ApiError(400, "Group ID Required"));
+    }
+    const id = new mongoose.Types.ObjectId("" + groupId);
+    const group = await Group.findById(groupId);
+
+    if (group?.creator.equals(user?._id)) {
+      const response = await Group.findByIdAndDelete(id);
+      if (!response) {
+        return res.status(400).json(new ApiError(400, "Issue In Credentials"));
+      }
+      return res
+        .status(200)
+        .json(
+          new ApiResponse(200, response, `Group Removed From User Successfully`)
+        );
+    } else {
+      const updatedMembers = group.members.filter(
+        (member) => !member.equals(user?._id)
+      );
+      const newGroup = await Group.findOneAndUpdate(
+        id,
+        {
+          $set: {
+            members: updatedMembers,
+          },
+        },
+        { new: true }
+      );
+      if (!newGroup) {
+        return res.status(500).json(new ApiError(500, "Issue in Saving Data"));
+      }
+
+      return res
+        .status(200)
+        .json(
+          new ApiResponse(200, newGroup, `Group Removed From User Successfully`)
+        );
+    }
+  } catch (error) {
+    return res.status(500).json({
+      apiError: new ApiError(500, "Issue in Remove User From Group"),
       message: error.message,
     });
   }

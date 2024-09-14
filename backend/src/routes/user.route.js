@@ -16,6 +16,7 @@ import {
   createGroups,
   getGroups,
   deleteGroup,
+  removeUserFromGroup,
 } from "../controllers/user.controller.js";
 import { isAuthenicated } from "../middlewares/auth.middleware.js";
 const router = Router();
@@ -34,17 +35,19 @@ router.route("/update").patch(isAuthenicated, updateProfile); // Update The User
 router
   .route("/update-ProfilePic")
   .patch(isAuthenicated, upload.single("image"), updateProfilePic); // Update the user's profile picture
-router.route("/delete").delete(isAuthenicated, deleteUser); // Delete the User
+router.route("/delete/:userId").delete(isAuthenicated, deleteUser); // Delete the User
 // Friend Related Routes
 router.route("/add-friend").post(isAuthenicated, addFriends); // Add friends to the friend list of USer
 router.route("/friends").get(isAuthenicated, getFriends); // Get All the friends data of the USer
-router.route("/remove-friend").delete(isAuthenicated, deleteFriend); // Delete a friend from the friend from the list
+router.route("/remove-friend/:friendId").delete(isAuthenicated, deleteFriend); // Delete a friend from the friend from the list
 
 // Group Related Routes
 router
   .route("/add-group")
   .post(isAuthenicated, upload.single("image"), createGroups);
 router.route("/groups").get(isAuthenicated, getGroups); // Get All the friends data of the USer
-router.route("/remove-group").delete(isAuthenicated, deleteGroup); // Delete a friend from the friend from the list
-
+router.route("/delete-group/:groupId").delete(isAuthenicated, deleteGroup); // Delete a friend from the friend from the list
+router
+  .route("/remove-group/:groupId")
+  .delete(isAuthenicated, removeUserFromGroup);
 export default router;

@@ -33,14 +33,14 @@ export const getFriendsService = async () => {
     );
   }
 };
-export const removeFriendsService = async ({ userName }) => {
+export const removeFriendsService = async ({ friendId }) => {
   try {
     const url = v1ApiRootUrl + "/user/remove-friend";
-    const response = await axios.delete(
-      url,
-      { userName },
-      { withCredentials: true }
-    );
+    console.log("in remove serviece ", friendId);
+
+    const response = await axios.delete(`${url}/${friendId}`, {
+      withCredentials: true,
+    });
     if (response?.data?.success === true) return response.data?.data;
     return null;
   } catch (error) {
@@ -95,11 +95,9 @@ export const getGroupsService = async () => {
 export const removeGroupsService = async ({ groupId }) => {
   try {
     const url = v1ApiRootUrl + "/user/remove-group";
-    const response = await axios.delete(
-      url,
-      { groupId },
-      { withCredentials: true }
-    );
+    const response = await axios.delete(`${url}/${groupId}`, {
+      withCredentials: true,
+    });
     if (response?.data?.success === true) return response.data?.data;
     return null;
   } catch (error) {
@@ -243,17 +241,3 @@ export const getTotalCreditAmountExpenseService = async () => {
     );
   }
 };
-// // utility Services
-// export const getAllUsers = async () => {
-//   try {
-//     const url = v1ApiRootUrl + "/user/all";
-//     const response = await axios.get(url);
-//     if (response?.data?.success === true) return response.data?.data;
-//     return null;
-//   } catch (error) {
-//     console.error(
-//       "User Service Error :: Get All Users Utility Service :: ",
-//       error.message
-//     );
-//   }
-// };
